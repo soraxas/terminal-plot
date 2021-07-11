@@ -1,9 +1,17 @@
 from setuptools import setup
+from os import path
+
+# read the contents of README file
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
+    long_description = f.read()
 
 setup(
     name='tensorboard-termplot',
-    version='1.0.0',
+    version='1.0.1',
     description='View tensorboard stats inside terminal.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     author='Tin Lai (@soraxas)',
     author_email='oscar@tinyiu.com',
     license='MIT',
