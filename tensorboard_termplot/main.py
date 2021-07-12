@@ -84,6 +84,23 @@ parser.add_argument(
 parser.add_argument(
     "--log_interval", type=int, default=50, help="How often to save model and samples."
 )
+# filtering for stats name
+parser.add_argument(
+    "-w",
+    "--whitelist",
+    type=str,
+    nargs="+",
+    metavar="keyword",
+    help="Keyword that the stat must contain for it to be plotted, case sensitive.",
+)
+parser.add_argument(
+    "-b",
+    "--blacklist",
+    type=str,
+    nargs="+",
+    metavar="keyword",
+    help="Keyword that the stat must not contain for it to be plotted, case sensitive.",
+)
 
 
 class EmptyEventFileError(Exception):
@@ -173,6 +190,22 @@ def _plot_for_one_run(args: argparse.ArgumentParser, run_dict: Dict, col_num: in
             _plot_post_setup(args=args, ylabel=scalar_name)
 
 
+def filter_stats(scalar_names, args):
+    if args.whitelist:
+        filtered_scalar_names = filter(
+            lambda name: any(keyword in name for keyword in args.whitelist),
+            scalar_names,
+        )
+    else:
+        filtered_scalar_names = list(scalar_names)
+    if args.blacklist:
+        filtered_scalar_names = filter(
+            lambda name: not any(keyword in name for keyword in args.blacklist),
+            filtered_scalar_names,
+        )
+    return list(filtered_scalar_names)
+
+
 def main(args):
     def clear_lines(n):
         import sys
@@ -221,6 +254,8 @@ def main(args):
                     f"Cannot find any scalars within the folder '{run_dict['folder']}'."
                     f" Is the folder correct? The ea tags are {run_dict['ea'].Tags()}"
                 )
+            # filter tags
+            scalar_names = filter_stats(scalar_names, args)
             # merge the stats together with the same prefix (if necessary)
             run_dict["consolidated_stats"] = get_consolidated_stats_list(
                 args, scalar_names=scalar_names

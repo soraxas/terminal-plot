@@ -1,6 +1,7 @@
 # Terminal-plot for Tensorboard
 
-[![pypi](https://img.shields.io/pypi/pyversions/tensorboard-termplot?label=tensorboard-termplot)](https://pypi.org/project/tensorboard-termplot/)
+[![pypi](https://img.shields.io/pypi/v/tensorboard-termplot)](https://pypi.org/project/tensorboard-termplot/)
+[![python-version](https://img.shields.io/pypi/pyversions/tensorboard-termplot)](https://pypi.org/project/tensorboard-termplot/)
 [![Master Update](https://img.shields.io/github/last-commit/soraxas/tensorboard-termplot/master.svg)](https://github.com/soraxas/tensorboard-termplot/commits/master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License](https://img.shields.io/github/license/soraxas/sbp-env.svg)](https://github.com/soraxas/tensorboard-termplot/blob/master/LICENSE)
