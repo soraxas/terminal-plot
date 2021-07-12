@@ -81,9 +81,6 @@ parser.add_argument(
     default=5,
     help="seconds to wait between updates",
 )
-parser.add_argument(
-    "--log_interval", type=int, default=50, help="How often to save model and samples."
-)
 # filtering for stats name
 parser.add_argument(
     "-w",
