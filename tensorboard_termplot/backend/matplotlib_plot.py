@@ -1,0 +1,109 @@
+import io
+import sys
+
+import matplotlib.colors as mcolors
+import matplotlib.pyplot as plt
+
+from .base_plotter import Plotter
+
+
+class MatplotlibPlot(Plotter):
+    @property
+    def unsupported_options(self):
+        return []
+        return ["follow"]
+
+    def plot(self, *args, label="", **kwargs):
+        self.cur_ax.plot(*args, label=label, **kwargs)
+
+    def xlog(self):
+        self.cur_ax.set_xscale("log")
+
+    def ylog(self):
+        self.cur_ax.set_yscale("log")
+
+    def xsymlog(self):
+        self.cur_ax.set_xscale("symlog")
+
+    def ysymlog(self):
+        self.cur_ax.set_yscale("symlog")
+
+    def ylabel(self, ylabel):
+        self.cur_ax.set_ylabel(ylabel)
+
+    def canvas_color(self):
+        self.fig.set_facecolor(self.args.canvas_color)
+
+    def axes_color(self):
+        self.cur_ax.set_facecolor(self.args.axes_color)
+
+    def ticks_color(self):
+        self.cur_ax.tick_params(colors=self.args.ticks_color)
+        self.cur_ax.xaxis.label.set_color(self.args.ticks_color)
+        self.cur_ax.yaxis.label.set_color(self.args.ticks_color)
+        for spine in self.cur_ax.spines.values():
+            spine.set_edgecolor(self.args.ticks_color)
+
+    def plotsize(self):
+        pass
+
+    def target_subplot(self, row, col):
+        self.cur_ax = self.axs[row - 1][col - 1]
+
+    # self.args.plotsize[0], self.args.plotsize[1]
+    def create_subplot(self, row, col):
+        self.fig, self.axs = plt.subplots(row, col, figsize=self.args.plotsize)
+
+    def set_title(self, title):
+        kwargs = {}
+        if self.args.ticks_color is not None:
+            kwargs["color"] = self.args.ticks_color
+        self.cur_ax.set_title(title, fontsize=10, **kwargs)
+
+    def clear_current_figure(self):
+        pass
+        # self.cur_ax.clf()
+
+    def clear_terminal_printed_lines(self):
+        pass
+        # self.fig.clear()
+
+    def show(self):
+        self.fig.tight_layout()
+        plt.show()
+
+    def as_image_raw_bytes(self):
+        self.fig.tight_layout()
+        string_io_bytes = io.BytesIO()
+        plt.savefig(string_io_bytes, format="png")
+        string_io_bytes.seek(0)
+        sys.stdout.buffer.write(string_io_bytes.read())
+
+    def as_image_raw_bytes(self):
+        self.fig.tight_layout()
+        string_io_bytes = io.BytesIO()
+        plt.savefig(string_io_bytes, format="png")
+        string_io_bytes.seek(0)
+        # sys.stdout.buffer.write(string_io_bytes.read())
+
+        from subprocess import Popen, PIPE, STDOUT
+        import os
+
+        size = os.get_terminal_size()
+
+        my_env = os.environ.copy()
+        popen_args = ["timg", "-", f"-g{size.columns}x{size.lines}"]
+        if my_env["TERM"] == "xterm-kitty":
+            popen_args += ["-pkitty"]
+        p = Popen(popen_args, stdout=PIPE, stdin=PIPE, stderr=STDOUT, env=my_env)
+        grep_stdout = p.communicate(input=string_io_bytes.read())[0]
+        print(grep_stdout.decode(), end="")
+
+    @property
+    def fixed_color_seq(self):
+        return mcolors.TABLEAU_COLORS
+
+    @property
+    def generator_color_seq(self):
+        while True:
+            yield from mcolors.TABLEAU_COLORS

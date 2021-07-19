@@ -3,9 +3,11 @@ import pathlib
 from typing import List, Dict
 
 import numpy as np
-import plotext as plt
-import plotext.utility as plt_util
 from tensorboard.backend.event_processing import event_accumulator
+
+from backend.base_plotter import Plotter
+from backend.matplotlib_plot import MatplotlibPlot
+from backend.terminal_plot import TerminalPlot
 
 
 def pair_of_int(arg):
@@ -49,10 +51,48 @@ parser.add_argument(
 # flags
 parser.add_argument("--grid", action="store_true", help="Show grid.")
 parser.add_argument(
+    "--backend",
+    default="plotext",
+    help="Set the plotting backend",
+    choices=["plotext", "matplotlib"],
+    type=str,
+)
+parser.add_argument(
     "--plotsize",
     help="Manually set the size of each subplot, e.g., 50,20.",
     metavar="WIDTH,HEIGHT",
     type=pair_of_int,
+)
+parser.add_argument(
+    "--xlog",
+    help="Set the list of subplots to use log scale in x-axis",
+    metavar="row,col",
+    type=pair_of_int,
+    nargs="*",
+)
+parser.add_argument(
+    "--ylog",
+    help="Set the list of subplots to use log scale in y-axis",
+    metavar="row,col",
+    type=pair_of_int,
+    nargs="*",
+)
+parser.add_argument(
+    "--xsymlog",
+    help="Set the list of subplots to use symlog scale in x-axis",
+    metavar="row,col",
+    type=pair_of_int,
+    nargs="*",
+)
+parser.add_argument(
+    "--ysymlog",
+    help="Set the list of subplots to use symlog scale in y-axis",
+    metavar="row,col",
+    type=pair_of_int,
+    nargs="*",
+)
+parser.add_argument(
+    "--as-raw-bytes", action="store_true", help="Writes the raw image bytes to stdout.",
 )
 parser.add_argument(
     "--force-label",
@@ -104,21 +144,6 @@ class EmptyEventFileError(Exception):
     pass
 
 
-def _plot_post_setup(args: argparse.ArgumentParser, ylabel: str, **kwargs):
-    plt.ylabel(ylabel)
-    if args.canvas_color:
-        plt.canvas_color(args.canvas_color)
-    if args.axes_color:
-        plt.axes_color(args.axes_color)
-    if args.ticks_color:
-        plt.ticks_color(args.ticks_color)
-    plt.grid(args.grid)
-    if args.plotsize:
-        plt.plotsize(args.plotsize[0], args.plotsize[1])
-    if args.colorless:
-        plt.colorless()
-
-
 def get_consolidated_stats_list(
     args: argparse.ArgumentParser, scalar_names: List[str]
 ) -> Dict[str, List[str]]:
@@ -148,28 +173,20 @@ def get_consolidated_stats_list(
     return consolidated_stats
 
 
-def _plot_for_one_run(args: argparse.ArgumentParser, run_dict: Dict, col_num: int):
-    title = f"Stats of '{run_dict['ea'].path}'"
+def _plot_for_one_run(plotter: Plotter, run_dict: Dict, col_num: int):
+    title = f"'{run_dict['ea'].path}'"
 
-    if args.follow:
-        title += " [refreshing every {args.interval} secs]"
+    if plotter.args.follow:
+        title += f" [refresh every {plotter.args.interval}s]"
 
-    if args.no_iter_color:
-        colors = plt_util.color_sequence
-    else:
-
-        def color_generator():
-            while True:
-                for c in plt_util.color_sequence:
-                    yield c
-
-        colors = color_generator()
+    colors = plotter.get_colors()
 
     for i, (prefix, scalar_names) in enumerate(run_dict["consolidated_stats"].items()):
-        plt.subplot(i + 1, col_num)
+        cur_row, cur_col = i + 1, col_num + 1
+        plotter.target_subplot(cur_row, cur_col)
         # setup the title for the current top subplot
         if i == 0:
-            plt.title(title)
+            plotter.set_title(title)
         ###############################
 
         for scalar_name, color in zip(scalar_names, colors):
@@ -177,14 +194,15 @@ def _plot_for_one_run(args: argparse.ArgumentParser, run_dict: Dict, col_num: in
             wall_t, steps, vals = series.T
             # only label the line if we are consolidating stats. (because otherwise it
             # will always be the only line)
-            plt.plot(
+            plotter.plot(
                 steps,
                 vals,
-                label=scalar_name if (args.consolidate or args.force_label) else None,
+                label=scalar_name
+                if (plotter.args.consolidate or plotter.args.force_label)
+                else None,
                 color=color,
-                marker="small",
             )
-            _plot_post_setup(args=args, ylabel=scalar_name)
+            plotter.post_setup(ylabel=scalar_name, cur_row=cur_row, cur_col=cur_col)
 
 
 def filter_stats(scalar_names, args):
@@ -204,15 +222,12 @@ def filter_stats(scalar_names, args):
 
 
 def main(args):
-    def clear_lines(n):
-        import sys
-
-        for i in range(n):
-            sys.stdout.write("\033[2K")
-            if i < n - 1:
-                sys.stdout.write("\033[A")
-                sys.stdout.write("\033[2K")
-        # sys.stdout.write("\r")
+    if args.backend == "plotext":
+        plotter = TerminalPlot(args)
+    elif args.backend == "matplotlib":
+        plotter = MatplotlibPlot(args)
+    else:
+        raise NotImplementedError()
 
     # ea = event_accumulator.EventAccumulator(args.folder)
     runs_to_plot = []
@@ -238,7 +253,7 @@ def main(args):
         )
 
     while True:
-        plt.clf()
+        plotter.clear_current_figure()
 
         # First loop through and find the maximum number of subplots across all folder
         # first, in case some folders have more subplots than others, will take the max
@@ -260,17 +275,21 @@ def main(args):
             max_plots = max(max_plots, len(run_dict["consolidated_stats"]))
 
         # create the master plot of all folders
-        plt.subplots(max_plots, len(runs_to_plot))
+        plotter.create_subplot(max_plots, len(runs_to_plot))
 
         # do the actual plotting
         for i, run_dict in enumerate(runs_to_plot):
             # plot the column of subplots for this folder
-            _plot_for_one_run(args, run_dict, i)
+            _plot_for_one_run(plotter, run_dict, i)
 
-        plt.show()
+        plotter.clear_terminal_printed_lines()
+        if args.as_raw_bytes:
+            plotter.as_image_raw_bytes()
+        else:
+            plotter.show()
         if not args.follow:
             break
-        plt.sleep(args.interval)
+        plotter.sleep()
 
 
 def run():
