@@ -11,6 +11,8 @@ class UnsupportedOption(NotImplementedError):
 class Plotter(metaclass=ABCMeta):
     def __init__(self, args: argparse.ArgumentParser):
         self.args = args
+        self.n_row = None
+        self.n_col = None
         for opt in self.unsupported_options:
             if opt in args and getattr(args, opt) not in [None, False]:
                 self.raise_not_supported_option(f"--{opt}")
@@ -24,18 +26,18 @@ class Plotter(metaclass=ABCMeta):
     def plot(self, *args, **kwargs):
         pass
 
-    def post_setup(self, ylabel, cur_row, cur_col):
-        def match_subplot(subplots_to_apply):
-            # empty list denotes wildcard
-            if subplots_to_apply is not None:
-                if (
-                    len(subplots_to_apply) == 0
-                    or (cur_row, cur_col) in subplots_to_apply
-                ):
-                    return True
-            return False
+    @staticmethod
+    def match_subplot(subplots_to_apply, cur_row, cur_col):
+        # empty list denotes wildcard
+        if subplots_to_apply is not None:
+            if len(subplots_to_apply) == 0 or (cur_row, cur_col) in subplots_to_apply:
+                return True
+        return False
 
-        self.ylabel(ylabel)
+    def post_setup(self, xlabel, ylabel, cur_row, cur_col):
+
+        self.xlabel(xlabel, cur_row=cur_row, cur_col=cur_col)
+        self.ylabel(ylabel, cur_row=cur_row, cur_col=cur_col)
         if self.args.canvas_color:
             self.canvas_color()
         if self.args.axes_color:
@@ -48,17 +50,21 @@ class Plotter(metaclass=ABCMeta):
             self.plotsize()
         if self.args.colorless:
             self.colorless()
-        if match_subplot(self.args.xlog):
+        if self.match_subplot(self.args.xlog, cur_row, cur_col):
             self.xlog()
-        if match_subplot(self.args.ylog):
+        if self.match_subplot(self.args.ylog, cur_row, cur_col):
             self.ylog()
-        if match_subplot(self.args.xsymlog):
+        if self.match_subplot(self.args.xsymlog, cur_row, cur_col):
             self.xsymlog()
-        if match_subplot(self.args.ysymlog):
+        if self.match_subplot(self.args.ysymlog, cur_row, cur_col):
             self.ysymlog()
 
     @abstractmethod
-    def ylabel(self, ylabel):
+    def xlabel(self, xlabel, **kwargs):
+        pass
+
+    @abstractmethod
+    def ylabel(self, ylabel, **kwargs):
         pass
 
     def xsymlog(self):
@@ -103,7 +109,8 @@ class Plotter(metaclass=ABCMeta):
 
     @abstractmethod
     def create_subplot(self, row, col):
-        pass
+        self.n_row = row
+        self.n_col = col
 
     @abstractmethod
     def set_title(self, title):

@@ -28,7 +28,16 @@ class MatplotlibPlot(Plotter):
     def ysymlog(self):
         self.cur_ax.set_yscale("symlog")
 
-    def ylabel(self, ylabel):
+    def xlabel(self, xlabel, **kwargs):
+        # only add xlabel to the bottom subplot
+        if self.match_subplot(
+            [(self.n_row, i) for i in range(1, self.n_col + 1)],
+            kwargs["cur_row"],
+            kwargs["cur_col"],
+        ):
+            self.cur_ax.set_xlabel(xlabel)
+
+    def ylabel(self, ylabel, **kwargs):
         self.cur_ax.set_ylabel(ylabel)
 
     def canvas_color(self):
@@ -57,8 +66,7 @@ class MatplotlibPlot(Plotter):
 
     # self.args.plotsize[0], self.args.plotsize[1]
     def create_subplot(self, row, col):
-        self.n_row = row
-        self.n_col = col
+        super().create_subplot(row, col)
         self.fig, self.axs = plt.subplots(row, col, figsize=self.args.plotsize)
 
     def set_title(self, title):

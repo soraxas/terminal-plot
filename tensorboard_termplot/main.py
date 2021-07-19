@@ -59,6 +59,14 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
+    "-x",
+    "--xaxis-type",
+    default="step",
+    help="Set value type to be used for x-axis",
+    choices=["step", "walltime"],
+    type=str,
+)
+parser.add_argument(
     "--plotsize",
     help="Manually set the size of each subplot, e.g., 50,20.",
     metavar="WIDTH,HEIGHT",
@@ -182,6 +190,15 @@ def _plot_for_one_run(plotter: Plotter, run_dict: Dict, col_num: int):
 
     colors = plotter.get_colors()
 
+    # find the earliest time across all stats
+    wall_t_origin = float("inf")
+    if plotter.args.xaxis_type == "walltime":
+        for prefix, scalar_names in run_dict["consolidated_stats"].items():
+            for scalar_name in scalar_names:
+                series = np.array(run_dict["ea"].Scalars(scalar_name))
+                wall_t, steps, vals = series.T
+                wall_t_origin = min(wall_t_origin, wall_t[0])
+
     for i, (prefix, scalar_names) in enumerate(run_dict["consolidated_stats"].items()):
         cur_row, cur_col = i + 1, col_num + 1
         plotter.target_subplot(cur_row, cur_col)
@@ -193,17 +210,28 @@ def _plot_for_one_run(plotter: Plotter, run_dict: Dict, col_num: int):
         for scalar_name, color in zip(scalar_names, colors):
             series = np.array(run_dict["ea"].Scalars(scalar_name))
             wall_t, steps, vals = series.T
+            if plotter.args.xaxis_type == "step":
+                x = steps
+            elif plotter.args.xaxis_type == "walltime":
+                x = wall_t - wall_t_origin
+            else:
+                raise NotImplementedError()
             # only label the line if we are consolidating stats. (because otherwise it
             # will always be the only line)
             plotter.plot(
-                steps,
+                x,
                 vals,
                 label=scalar_name
                 if (plotter.args.consolidate or plotter.args.force_label)
                 else None,
                 color=color,
             )
-            plotter.post_setup(ylabel=scalar_name, cur_row=cur_row, cur_col=cur_col)
+            plotter.post_setup(
+                xlabel=plotter.args.xaxis_type,
+                ylabel=scalar_name,
+                cur_row=cur_row,
+                cur_col=cur_col,
+            )
 
 
 def filter_stats(scalar_names, args):

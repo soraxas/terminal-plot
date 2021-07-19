@@ -12,7 +12,10 @@ class TerminalPlot(Plotter):
     def plot(self, *args, label="", marker="small", **kwargs):
         plt.plot(*args, label=label, marker=marker, **kwargs)
 
-    def ylabel(self, ylabel):
+    def xlabel(self, xlabel, **kwargs):
+        plt.xlabel(xlabel)
+
+    def ylabel(self, ylabel, **kwargs):
         plt.ylabel(ylabel)
 
     def xlog(self):
@@ -43,6 +46,7 @@ class TerminalPlot(Plotter):
         plt.subplot(row, col)
 
     def create_subplot(self, row, col):
+        super().create_subplot(row, col)
         plt.subplots(row, col)
 
     def set_title(self, title):
