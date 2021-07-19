@@ -123,6 +123,11 @@ parser.add_argument(
     help="Run in a loop to update display periodic.",
 )
 parser.add_argument(
+    "--timg",
+    action="store_true",
+    help="Pass output to timg for matplotlib backend, implies --as-raw-bytes.",
+)
+parser.add_argument(
     "-n",
     "--interval",
     type=float,
@@ -336,6 +341,8 @@ def run():
                 _args.axes_color = "black"
             if _args.ticks_color is None:
                 _args.ticks_color = "white"
+        if _args.timg:
+            _args.as_raw_bytes = True
         main(_args)
     except KeyboardInterrupt:
         pass

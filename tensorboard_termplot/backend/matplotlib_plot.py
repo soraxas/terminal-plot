@@ -1,5 +1,7 @@
 import io
+import os
 import sys
+from subprocess import Popen, PIPE, STDOUT
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
@@ -87,32 +89,25 @@ class MatplotlibPlot(Plotter):
         self.fig.tight_layout()
         plt.show()
 
-    def as_image_raw_bytes(self):
+    def _get_image_raw_bytes(self):
         self.fig.tight_layout()
         string_io_bytes = io.BytesIO()
         plt.savefig(string_io_bytes, format="png")
         string_io_bytes.seek(0)
-        sys.stdout.buffer.write(string_io_bytes.read())
+        return string_io_bytes.read()
 
     def as_image_raw_bytes(self):
-        self.fig.tight_layout()
-        string_io_bytes = io.BytesIO()
-        plt.savefig(string_io_bytes, format="png")
-        string_io_bytes.seek(0)
-        # sys.stdout.buffer.write(string_io_bytes.read())
-
-        from subprocess import Popen, PIPE, STDOUT
-        import os
-
-        size = os.get_terminal_size()
-
-        my_env = os.environ.copy()
-        popen_args = ["timg", "-", f"-g{size.columns}x{size.lines}"]
-        if my_env["TERM"] == "xterm-kitty":
-            popen_args += ["-pkitty"]
-        p = Popen(popen_args, stdout=PIPE, stdin=PIPE, stderr=STDOUT, env=my_env)
-        grep_stdout = p.communicate(input=string_io_bytes.read())[0]
-        print(grep_stdout.decode(), end="")
+        if self.args.timg:
+            size = os.get_terminal_size()
+            my_env = os.environ.copy()
+            popen_args = ["timg", "-", f"-g{size.columns}x{size.lines}"]
+            if my_env["TERM"] == "xterm-kitty":
+                popen_args += ["-pkitty"]
+            p = Popen(popen_args, stdout=PIPE, stdin=PIPE, stderr=STDOUT, env=my_env)
+            grep_stdout = p.communicate(input=self._get_image_raw_bytes())[0]
+            sys.stdout.buffer.write(grep_stdout.decode())
+        else:
+            sys.stdout.buffer.write(self._get_image_raw_bytes())
 
     @property
     def fixed_color_seq(self):
