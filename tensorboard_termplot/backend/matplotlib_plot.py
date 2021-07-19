@@ -48,10 +48,17 @@ class MatplotlibPlot(Plotter):
         pass
 
     def target_subplot(self, row, col):
-        self.cur_ax = self.axs[row - 1][col - 1]
+        if self.n_row == 1:
+            self.cur_ax = self.axs[col - 1]
+        elif self.n_col == 1:
+            self.cur_ax = self.axs[row - 1]
+        else:
+            self.cur_ax = self.axs[row - 1][col - 1]
 
     # self.args.plotsize[0], self.args.plotsize[1]
     def create_subplot(self, row, col):
+        self.n_row = row
+        self.n_col = col
         self.fig, self.axs = plt.subplots(row, col, figsize=self.args.plotsize)
 
     def set_title(self, title):

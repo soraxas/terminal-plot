@@ -1,13 +1,14 @@
 import argparse
+import os
 import pathlib
 from typing import List, Dict
 
 import numpy as np
 from tensorboard.backend.event_processing import event_accumulator
 
-from backend.base_plotter import Plotter
-from backend.matplotlib_plot import MatplotlibPlot
-from backend.terminal_plot import TerminalPlot
+from tensorboard_termplot.backend.base_plotter import Plotter
+from tensorboard_termplot.backend.matplotlib_plot import MatplotlibPlot
+from tensorboard_termplot.backend.terminal_plot import TerminalPlot
 
 
 def pair_of_int(arg):
@@ -231,7 +232,12 @@ def main(args):
 
     # ea = event_accumulator.EventAccumulator(args.folder)
     runs_to_plot = []
-    if next(pathlib.Path(args.folder).glob("events.out.*"), None) is not None:
+    if os.path.basename(args.folder).startswith("events.out."):
+        # the given 'folder' is the actual event file
+        runs_to_plot.append(
+            dict(ea=event_accumulator.EventAccumulator(args.folder), folder=args.folder)
+        )
+    elif next(pathlib.Path(args.folder).glob("events.out.*"), None) is not None:
         # the given folder is the actual event folder
         runs_to_plot.append(
             dict(ea=event_accumulator.EventAccumulator(args.folder), folder=args.folder)
