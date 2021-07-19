@@ -8,7 +8,7 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="tensorboard-termplot",
-    version="1.1.1",
+    version="1.1.2",
     description="View tensorboard stats inside terminal.",
     long_description=long_description,
     long_description_content_type="text/markdown",
