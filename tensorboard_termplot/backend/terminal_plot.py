@@ -59,7 +59,17 @@ class TerminalPlot(Plotter):
         plt.clear_terminal_printed_lines()
 
     def show(self):
-        plt.show()
+        if self.args.terminal_width and self.args.terminal_height:
+            import mock
+
+            with mock.patch("os.get_terminal_size") as MockClass:
+                MockClass.return_value = (
+                    self.args.terminal_width,
+                    self.args.terminal_height,
+                )
+                plt.show()
+        else:
+            plt.show()
 
     @property
     def fixed_color_seq(self):

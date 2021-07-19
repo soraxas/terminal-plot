@@ -153,6 +153,13 @@ parser.add_argument(
     help="Keyword that the stat must not contain for it to be plotted, case sensitive.",
 )
 
+parser.add_argument(
+    "--terminal-width", type=int, help="Manually set the terminal width.",
+)
+parser.add_argument(
+    "--terminal-height", type=int, help="Manually set the terminal height.",
+)
+
 
 class EmptyEventFileError(Exception):
     pass

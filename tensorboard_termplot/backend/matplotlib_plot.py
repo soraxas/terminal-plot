@@ -105,7 +105,7 @@ class MatplotlibPlot(Plotter):
                 popen_args += ["-pkitty"]
             p = Popen(popen_args, stdout=PIPE, stdin=PIPE, stderr=STDOUT, env=my_env)
             grep_stdout = p.communicate(input=self._get_image_raw_bytes())[0]
-            sys.stdout.buffer.write(grep_stdout.decode())
+            sys.stdout.write(grep_stdout.decode())
         else:
             sys.stdout.buffer.write(self._get_image_raw_bytes())
 
