@@ -29,6 +29,13 @@ def pair_of_num_assign_pair_of_num(arg):
     return tuple(map(pair_of_num, arg))
 
 
+def between_zero_and_one(arg):
+    arg = float(arg)
+    if not (0 <= arg <= 1):
+        raise ValueError()
+    return arg
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "folder", metavar="FOLDER", type=str, help="Folder of a tensorboard runs"
@@ -188,6 +195,22 @@ parser.add_argument(
     action="store_true",
     help="Pass output to timg for matplotlib backend, implies --as-raw-bytes.",
 )
+parser.add_argument(
+    "-s",
+    "--smooth",
+    metavar="0-1",
+    const=0.05,
+    nargs="?",
+    type=between_zero_and_one,
+    help="A value from 0 to 1 as a smoothing factor.",
+)
+parser.add_argument(
+    "--smooth-poly-order",
+    metavar="poly-order",
+    default=3,
+    type=int,
+    help="Polynomial order for the savgol smoothing algorithm.",
+)
 
 # plotext backend specific
 parser.add_argument(
@@ -200,6 +223,36 @@ parser.add_argument(
 
 class EmptyEventFileError(Exception):
     pass
+
+
+def ensure_odd(x: int, roundup: bool):
+    if x % 2 == 0:
+        if roundup:
+            return x + 1
+        else:
+            return x - 1
+    return x
+
+
+def apply_smoothing(y_vals, smoothing_factor: float, poly_order: int):
+    from scipy.signal import savgol_filter
+
+    # factor controls the window size, with factor 0 being the min and 1
+    # being the max
+    # window size must be odd, and greater than the polynomial order
+    min_win_size = poly_order + 1
+    max_win_size = len(y_vals)
+
+    min_win_size = ensure_odd(min_win_size, roundup=True)
+    max_win_size = ensure_odd(max_win_size, roundup=False)
+    assert min_win_size < max_win_size
+
+    # apply the user-supplied factor
+    win_size = int(min_win_size + smoothing_factor * (max_win_size - min_win_size))
+
+    win_size = ensure_odd(win_size, roundup=False)
+
+    return savgol_filter(y_vals, win_size, poly_order)
 
 
 def get_consolidated_stats_list(
@@ -259,6 +312,11 @@ def _plot_for_one_run(plotter: Plotter, run_dict: Dict, col_num: int):
         for scalar_name, color in zip(scalar_names, colors):
             series = np.array(run_dict["ea"].Scalars(scalar_name))
             wall_t, steps, vals = series.T
+            if plotter.args.smooth:
+                vals = apply_smoothing(
+                    vals, plotter.args.smooth, plotter.args.smooth_poly_order
+                )
+
             if plotter.args.xaxis_type == "step":
                 x = steps
             elif plotter.args.xaxis_type == "walltime":
