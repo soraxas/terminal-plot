@@ -23,6 +23,30 @@ parser.add_argument(
     "folder", metavar="FOLDER", type=str, help="Folder of a tensorboard runs"
 )
 
+# plotting generic flags
+parser.add_argument(
+    "--backend",
+    default="plotext",
+    help="Set the plotting backend",
+    choices=["plotext", "matplotlib"],
+    type=str,
+)
+parser.add_argument(
+    "-m",
+    "--matplotlib",
+    help="Alias of --backend matplotlib",
+    action="store_true",
+)
+parser.add_argument(
+    "--plotsize",
+    help="Manually set the size of each subplot, e.g., 50,20.",
+    metavar="WIDTH,HEIGHT",
+    type=pair_of_int,
+)
+parser.add_argument(
+    "-c", "--consolidate", action="store_true", help="Consolidate based on prefix."
+)
+
 # canvas flags
 parser.add_argument(
     "--canvas-color",
@@ -40,6 +64,7 @@ parser.add_argument(
     type=str,
     help="sets the (full-ground) color of the axes ticks and of the grid lines.",
 )
+parser.add_argument("--grid", action="store_true", help="Show grid.")
 parser.add_argument("--colorless", action="store_true", help="Remove color.")
 parser.add_argument(
     "-d",
@@ -49,15 +74,52 @@ parser.add_argument(
     "axes-color to black, and setting ticks-color to red. Can be overwritten "
     "individually.",
 )
-# flags
-parser.add_argument("--grid", action="store_true", help="Show grid.")
 parser.add_argument(
-    "--backend",
-    default="plotext",
-    help="Set the plotting backend",
-    choices=["plotext", "matplotlib"],
-    type=str,
+    "--no-iter-color",
+    action="store_true",
+    help="Stop iterating through different colors per plot.",
 )
+parser.add_argument(
+    "--force-label",
+    action="store_true",
+    help="Force showing label even for plot with one series.",
+)
+
+# auto-refresh related flag
+parser.add_argument(
+    "-f",
+    "--follow",
+    action="store_true",
+    help="Run in a loop to update display periodic.",
+)
+parser.add_argument(
+    "-n",
+    "--interval",
+    type=float,
+    metavar="secs",
+    default=5,
+    help="seconds to wait between updates",
+)
+
+# filtering for stats name
+parser.add_argument(
+    "-w",
+    "--whitelist",
+    type=str,
+    nargs="+",
+    metavar="keyword",
+    help="Keyword that the stat must contain for it to be plotted, case sensitive.",
+)
+parser.add_argument(
+    "-b",
+    "--blacklist",
+    type=str,
+    nargs="+",
+    metavar="keyword",
+    help="Keyword that the stat must not contain for it to be plotted, case sensitive.",
+)
+
+# axis flag
 parser.add_argument(
     "-x",
     "--xaxis-type",
@@ -65,12 +127,6 @@ parser.add_argument(
     help="Set value type to be used for x-axis",
     choices=["step", "walltime"],
     type=str,
-)
-parser.add_argument(
-    "--plotsize",
-    help="Manually set the size of each subplot, e.g., 50,20.",
-    metavar="WIDTH,HEIGHT",
-    type=pair_of_int,
 )
 parser.add_argument(
     "--xlog",
@@ -100,59 +156,18 @@ parser.add_argument(
     type=pair_of_int,
     nargs="*",
 )
+
+# matplotlib backend specific
 parser.add_argument(
     "--as-raw-bytes", action="store_true", help="Writes the raw image bytes to stdout.",
-)
-parser.add_argument(
-    "--force-label",
-    action="store_true",
-    help="Force showing label even for plot with one series.",
-)
-parser.add_argument(
-    "--no-iter-color",
-    action="store_true",
-    help="Stop iterating through different colors per plot.",
-)
-parser.add_argument(
-    "-c", "--consolidate", action="store_true", help="Consolidate based on prefix."
-)
-parser.add_argument(
-    "-f",
-    "--follow",
-    action="store_true",
-    help="Run in a loop to update display periodic.",
 )
 parser.add_argument(
     "--timg",
     action="store_true",
     help="Pass output to timg for matplotlib backend, implies --as-raw-bytes.",
 )
-parser.add_argument(
-    "-n",
-    "--interval",
-    type=float,
-    metavar="secs",
-    default=5,
-    help="seconds to wait between updates",
-)
-# filtering for stats name
-parser.add_argument(
-    "-w",
-    "--whitelist",
-    type=str,
-    nargs="+",
-    metavar="keyword",
-    help="Keyword that the stat must contain for it to be plotted, case sensitive.",
-)
-parser.add_argument(
-    "-b",
-    "--blacklist",
-    type=str,
-    nargs="+",
-    metavar="keyword",
-    help="Keyword that the stat must not contain for it to be plotted, case sensitive.",
-)
 
+# plotext backend specific
 parser.add_argument(
     "--terminal-width", type=int, help="Manually set the terminal width.",
 )
@@ -341,7 +356,9 @@ def main(args):
 def run():
     try:
         _args = parser.parse_args()
+        # handles alias of options
         if _args.dark_theme:
+            # only set values when unset, such that they can be overridden
             if _args.canvas_color is None:
                 _args.canvas_color = "black"
             if _args.axes_color is None:
@@ -350,6 +367,8 @@ def run():
                 _args.ticks_color = "white"
         if _args.timg:
             _args.as_raw_bytes = True
+        if _args.matplotlib:
+            _args.backend = "matplotlib"
         main(_args)
     except KeyboardInterrupt:
         pass
