@@ -58,6 +58,24 @@ class Plotter(metaclass=ABCMeta):
             self.xsymlog()
         if self.match_subplot(self.args.ysymlog, cur_row, cur_col):
             self.ysymlog()
+        for _lim_arg, _lim_func in [
+            (self.args.xlim, self.xlim),
+            (self.args.ylim, self.ylim),
+        ]:
+            if _lim_arg is not None:
+                try:
+                    index = [x[0] for x in _lim_arg].index((cur_row, cur_col))
+                except ValueError:
+                    continue
+                _lim_func(cur_row, cur_col, _lim_arg[index][1])
+
+    @abstractmethod
+    def xlim(self, row, col, limits):
+        pass
+
+    @abstractmethod
+    def ylim(self, row, col, limits):
+        pass
 
     @abstractmethod
     def xlabel(self, xlabel, **kwargs):

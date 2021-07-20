@@ -11,11 +11,22 @@ from tensorboard_termplot.backend.matplotlib_plot import MatplotlibPlot
 from tensorboard_termplot.backend.terminal_plot import TerminalPlot
 
 
-def pair_of_int(arg):
+def pair_of_num(arg):
     arg = arg.split(",")
     if len(arg) != 2:
-        raise ValueError("It must be in the format of a,b (e.g. 300,20)")
-    return tuple(map(int, arg))
+        raise ValueError("It must be in the format of a,b (e.g. 30.0,2.2)")
+    return tuple(map(float, arg))
+
+
+def pair_of_int(arg):
+    return tuple(map(int, pair_of_num(arg)))
+
+
+def pair_of_num_assign_pair_of_num(arg):
+    arg = arg.split("=")
+    if len(arg) != 2:
+        raise ValueError("It must be in the format of a,b=c,d (e.g. 30.0,20=30.2,45)")
+    return tuple(map(pair_of_num, arg))
 
 
 parser = argparse.ArgumentParser()
@@ -32,10 +43,7 @@ parser.add_argument(
     type=str,
 )
 parser.add_argument(
-    "-m",
-    "--matplotlib",
-    help="Alias of --backend matplotlib",
-    action="store_true",
+    "-m", "--matplotlib", help="Alias of --backend matplotlib", action="store_true",
 )
 parser.add_argument(
     "--plotsize",
@@ -155,6 +163,20 @@ parser.add_argument(
     metavar="row,col",
     type=pair_of_int,
     nargs="*",
+)
+parser.add_argument(
+    "--xlim",
+    help="Set the list of xlim for the specified subplot.",
+    metavar="row,col=min,max",
+    type=pair_of_num_assign_pair_of_num,
+    nargs="+",
+)
+parser.add_argument(
+    "--ylim",
+    help="Set the list of ylim for the specified subplot.",
+    metavar="row,col=min,max",
+    type=pair_of_num_assign_pair_of_num,
+    nargs="+",
 )
 
 # matplotlib backend specific

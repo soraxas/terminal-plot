@@ -18,6 +18,12 @@ class MatplotlibPlot(Plotter):
     def plot(self, *args, label="", **kwargs):
         self.cur_ax.plot(*args, label=label, **kwargs)
 
+    def xlim(self, row, col, limits):
+        self.cur_ax.set_xlim(limits)
+
+    def ylim(self, row, col, limits):
+        self.cur_ax.set_ylim(limits)
+
     def xlog(self):
         self.cur_ax.set_xscale("log")
 

@@ -18,6 +18,12 @@ class TerminalPlot(Plotter):
     def ylabel(self, ylabel, **kwargs):
         plt.ylabel(ylabel)
 
+    def xlim(self, row, col, limits):
+        plt.xlim(*limits)
+
+    def ylim(self, row, col, limits):
+        plt.ylim(*limits)
+
     def xlog(self):
         plt.xscale("log")
 
