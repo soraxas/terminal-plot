@@ -22,7 +22,6 @@ class TensorboardDataSource(DataSource):
                 TensorboardFigureData(
                     ea=EventAccumulator(_folder),
                     folder=_folder,
-                    consolidated_stats=self.args.consolidate,
                 )
             )
 
@@ -56,12 +55,9 @@ class TensorboardDataSource(DataSource):
 
 
 class TensorboardFigureData(FigureData):
-    def __init__(
-        self, ea: EventAccumulator, folder: str, consolidated_stats: bool = False
-    ):
+    def __init__(self, ea: EventAccumulator, folder: str):
         self.ea = ea
         self.folder = folder
-        self.consolidated_stats = consolidated_stats
         self.refresh()
         if len(self.scalar_names) == 0:
             raise EmptyEventFileError(
@@ -74,14 +70,14 @@ class TensorboardFigureData(FigureData):
 
     # def get_series(self, *, x, y, scalar_name: str):
     def get_series(self, *, x: str, y: str):
-        if x not in ("step", "walltime"):
-            raise ValueError("Tensorboard only support 'step' or 'walltime' as x-axis")
+        if x not in ("step", "time"):
+            raise ValueError("Tensorboard only support 'step' or 'time' as x-axis")
         series = np.array(self.ea.Scalars(y))
         wall_t, steps, vals = series.T
         if x == "step":
             x_values = steps
         else:
-            assert x == "walltime"
+            assert x == "time"
             x_values = wall_t - self._get_time_origin()
         return x_values, vals
 

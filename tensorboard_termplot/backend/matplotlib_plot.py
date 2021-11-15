@@ -15,10 +15,9 @@ class MatplotlibPlot(Plotter):
     @property
     def unsupported_options(self):
         return []
-        return ["follow"]
 
     def plot(self, *args, label="", **kwargs):
-        self.cur_ax.scatter(*args, label=label, **kwargs)
+        self.cur_ax.plot(*args, label=label, **kwargs)
 
     def scatter(self, *args, label="", **kwargs):
         self.cur_ax.scatter(*args, label=label, **kwargs)
@@ -40,6 +39,9 @@ class MatplotlibPlot(Plotter):
 
     def ysymlog(self):
         self.cur_ax.set_yscale("symlog")
+
+    def legend(self):
+        self.cur_ax.legend()
 
     def xlabel(self, xlabel, **kwargs):
         # only add xlabel to the bottom subplot
@@ -142,7 +144,6 @@ class MatplotlibPlotTerminal(MatplotlibPlot):
     @lru_cache()
     def get_supported_backend(cls):
         """Determine if the system has necessary binary to support this plotter."""
-        print("-------------------")
         if which("timg"):
             return ["timg", "-"]
         elif which("kitty"):

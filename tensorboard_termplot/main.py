@@ -48,7 +48,7 @@ parser.add_argument(
     "--data-source",
     default="tensorboard",
     help="Set the plotting data source",
-    choices=["tensorboard"],
+    choices=["tensorboard", "csv"],
     type=str,
 )
 parser.add_argument(
@@ -64,12 +64,17 @@ parser.add_argument(
     type=pair_of_int,
 )
 parser.add_argument(
-    "-c", "--consolidate", action="store_true", help="Consolidate based on prefix."
+    "-c",
+    "--consolidate",
+    action="count",
+    help="Consolidate based on prefix. If -cc is given, everything will consolidated "
+    "regardless of prefix",
 )
 parser.add_argument(
     "--as-scatter",
     help="Plot as scatter (instead of line plot)",
     action="store_true",
+    default=False,
 )
 
 # canvas flags
@@ -149,8 +154,9 @@ parser.add_argument(
     "-x",
     "--xaxis-type",
     default="step",
-    help="Set value type to be used for x-axis",
-    choices=["step", "walltime"],
+    help="Set value type to be used for x-axis. Tensorboard only supports 'step' or "
+    "'time' as x-axis.",
+    # choices=["step", "time"],
     type=str,
 )
 parser.add_argument(
@@ -358,6 +364,12 @@ def main(args):
         )
 
         DataSourceClass = TensorboardDataSource
+    elif args.data_source == "csv":
+        from data_source.csv_source import (
+            CsvDataSource,
+        )
+
+        DataSourceClass = CsvDataSource
     else:
         raise NotImplementedError()
 

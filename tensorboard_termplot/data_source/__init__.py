@@ -30,18 +30,28 @@ class DataSource(ABC):
         :return: a dictionary that maps a prefix to a list of related stats
         """
         all_scalar_names = self.get_all_scalar_names()
+        # filter out if this stat is used as the x-axis
+        all_scalar_names = list(
+            filter(lambda x: x != self.args.xaxis_type, all_scalar_names)
+        )
         if not self.args.consolidate:
             # construct dummy dict in consistent with the consolidation version
             return {scalar_name: [scalar_name] for scalar_name in all_scalar_names}
 
-        # combine related stats based on prefix
         consolidated_stats = dict()
-        for scalar_name in all_scalar_names:
-            # e.g. Loss/train, Loss/test, etc.
-            prefix = scalar_name.split("/")[0]
-            stats = consolidated_stats.get(prefix, [])
-            stats.append(scalar_name)
-            consolidated_stats[prefix] = stats
+        # combine related stats based on prefix
+        if self.args.consolidate == 1:
+            for scalar_name in all_scalar_names:
+                # e.g. Loss/train, Loss/test, etc.
+                prefix = scalar_name.split("/")[0]
+                stats = consolidated_stats.get(prefix, [])
+                stats.append(scalar_name)
+                consolidated_stats[prefix] = stats
+        elif self.args.consolidate >= 2:
+            # combine everything
+            consolidated_stats[""] = []
+            for scalar_name in all_scalar_names:
+                consolidated_stats[""].append(scalar_name)
         return consolidated_stats
 
     @abstractmethod

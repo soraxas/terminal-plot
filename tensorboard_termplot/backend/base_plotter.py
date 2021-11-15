@@ -54,6 +54,8 @@ class Plotter(metaclass=ABCMeta):
             self.plotsize()
         if self.args.colorless:
             self.colorless()
+        if self.args.consolidate:
+            self.legend()
         if self.match_subplot(self.args.xlog, cur_row, cur_col):
             self.xlog()
         if self.match_subplot(self.args.ylog, cur_row, cur_col):
@@ -72,6 +74,9 @@ class Plotter(metaclass=ABCMeta):
                 except ValueError:
                     continue
                 _lim_func(cur_row, cur_col, _lim_arg[index][1])
+
+    def legend(self):
+        pass
 
     @abstractmethod
     def xlim(self, row, col, limits):
