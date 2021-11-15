@@ -65,6 +65,11 @@ parser.add_argument(
 parser.add_argument(
     "-c", "--consolidate", action="store_true", help="Consolidate based on prefix."
 )
+parser.add_argument(
+    "--as-scatter",
+    help="Plot as scatter (instead of line plot)",
+    action="store_true",
+)
 
 # canvas flags
 parser.add_argument(
@@ -195,11 +200,6 @@ parser.add_argument(
     "--as-raw-bytes",
     action="store_true",
     help="Writes the raw image bytes to stdout.",
-)
-parser.add_argument(
-    "--timg",
-    action="store_true",
-    help="Pass output to timg for matplotlib backend, implies --as-raw-bytes.",
 )
 parser.add_argument(
     "-s",
@@ -335,7 +335,8 @@ def _plot_for_one_run(plotter: Plotter, run_dict: Dict, col_num: int):
                 raise NotImplementedError()
             # only label the line if we are consolidating stats. (because otherwise it
             # will always be the only line)
-            plotter.plot(
+            _plot_func = plotter.scatter if plotter.args.as_scatter else plotter.plot
+            _plot_func(
                 x,
                 vals,
                 label=scalar_name
@@ -457,8 +458,6 @@ def run():
                 _args.axes_color = "black"
             if _args.ticks_color is None:
                 _args.ticks_color = "white"
-        if _args.timg:
-            _args.as_raw_bytes = True
         if _args.matplotlib:
             _args.backend = "matplotlib"
         main(_args)

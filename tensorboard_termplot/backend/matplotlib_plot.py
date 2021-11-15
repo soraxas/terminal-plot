@@ -17,7 +17,10 @@ class MatplotlibPlot(Plotter):
         return ["follow"]
 
     def plot(self, *args, label="", **kwargs):
-        self.cur_ax.plot(*args, label=label, **kwargs)
+        self.cur_ax.scatter(*args, label=label, **kwargs)
+
+    def scatter(self, *args, label="", **kwargs):
+        self.cur_ax.scatter(*args, label=label, **kwargs)
 
     def xlim(self, row, col, limits):
         self.cur_ax.set_xlim(limits)

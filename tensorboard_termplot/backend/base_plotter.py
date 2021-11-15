@@ -26,6 +26,10 @@ class Plotter(metaclass=ABCMeta):
     def plot(self, *args, **kwargs):
         pass
 
+    @abstractmethod
+    def scatter(self, *args, **kwargs):
+        pass
+
     @staticmethod
     def match_subplot(subplots_to_apply, cur_row, cur_col):
         # empty list denotes wildcard

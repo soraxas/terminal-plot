@@ -1,5 +1,5 @@
 import plotext as plt
-import plotext.utility as plt_util
+import plotext._utility as plt_util
 
 from .base_plotter import Plotter
 
@@ -9,8 +9,11 @@ class TerminalPlot(Plotter):
     def unsupported_options(self):
         return ["xsymlog", "ysymlog"]
 
-    def plot(self, *args, label="", marker="small", **kwargs):
-        plt.plot(*args, label=label, marker=marker, **kwargs)
+    def plot(self, *args, label="", **kwargs):
+        plt.plot(*args, label=label, **kwargs)
+
+    def scatter(self, *args, label="", **kwargs):
+        plt.scatter(*args, label=label, **kwargs)
 
     def xlabel(self, xlabel, **kwargs):
         plt.xlabel(xlabel)
@@ -62,7 +65,7 @@ class TerminalPlot(Plotter):
         plt.clf()
 
     def clear_terminal_printed_lines(self):
-        plt.clear_terminal_printed_lines()
+        plt.clear_terminal()
 
     def show(self):
         if self.args.terminal_width and self.args.terminal_height:
@@ -79,10 +82,10 @@ class TerminalPlot(Plotter):
 
     @property
     def fixed_color_seq(self):
-        return plt_util.color_sequence
+        return plt_util.color.color_sequence
 
     @property
     def generator_color_seq(self):
         while True:
-            for c in plt_util.color_sequence:
+            for c in self.fixed_color_seq:
                 yield c

@@ -19,7 +19,7 @@ setup(
     keywords="tui tensorboard termplot stats",
     python_requires=">=3.6",
     packages=["tensorboard_termplot", "tensorboard_termplot.backend"],
-    install_requires=["tensorboard", "plotext", "mock"],
+    install_requires=["tensorboard>=2.5", "plotext==4.0", "mock"],
     extras_require={"matplotlib-backend": ["matplotlib"]},
     entry_points={
         "console_scripts": ["tensorboard-termplot=tensorboard_termplot.main:run"]
