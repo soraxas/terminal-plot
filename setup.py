@@ -8,7 +8,7 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="tensorboard-termplot",
-    version="1.3.1",
+    version="1.3.2",
     description="View tensorboard stats inside terminal.",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -19,7 +19,7 @@ setup(
     keywords="tui tensorboard termplot stats",
     python_requires=">=3.6",
     packages=["tensorboard_termplot", "tensorboard_termplot.backend", "tensorboard_termplot.data_source"],
-    install_requires=["tensorboard>=2.5", "plotext==4.0", "mock"],
+    install_requires=["tensorboard>=2.5", "plotext==4.0", "mock", "pillow", "pandas", "numpy", "scipy"],
     extras_require={"matplotlib-backend": ["matplotlib"]},
     entry_points={
         "console_scripts": ["tensorboard-termplot=tensorboard_termplot.main:run"]
