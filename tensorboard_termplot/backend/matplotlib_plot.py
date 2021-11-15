@@ -1,6 +1,7 @@
 import io
 import os
 import sys
+from functools import lru_cache
 from shutil import which
 from subprocess import Popen, PIPE, STDOUT
 
@@ -131,20 +132,23 @@ class MatplotlibPlot(Plotter):
 
 
 class MatplotlibPlotTerminal(MatplotlibPlot):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        if which("timg"):
-            self.backend_program_cmds = ["timg", "-"]
-        elif which("kitty"):
-            self.backend_program_cmds = ["kitty", "+kitten", "icat"]
-        else:
+    def __init__(self, args):
+        super().__init__(args)
+        self.backend_program_cmds = self.get_supported_backend()
+        if self.backend_program_cmds is None:
             raise RuntimeError("No supported program found (e.g. timg, .")
 
-    def show(self):
-        imgdata = io.BytesIO()
-        imgdata.seek(0)
+    @classmethod
+    @lru_cache()
+    def get_supported_backend(cls):
+        """Determine if the system has necessary binary to support this plotter."""
+        print("-------------------")
+        if which("timg"):
+            return ["timg", "-"]
+        elif which("kitty"):
+            return ["kitty", "+kitten", "icat"]
 
+    def show(self):
         program = Popen(
             self.backend_program_cmds,
             stdin=PIPE,

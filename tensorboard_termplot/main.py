@@ -338,9 +338,13 @@ def main(args):
 
         plotter = TerminalPlot(args)
     elif args.backend == "matplotlib":
-        from backend.matplotlib_plot import MatplotlibPlot
+        from backend.matplotlib_plot import MatplotlibPlot, MatplotlibPlotTerminal
 
-        plotter = MatplotlibPlot(args)
+        if MatplotlibPlotTerminal.get_supported_backend() is not None:
+            # automatically use terminal version of matplotlib, if supported.
+            plotter = MatplotlibPlotTerminal(args)
+        else:
+            plotter = MatplotlibPlot(args)
     elif args.backend == "matplotlib-terminal":
         from backend.matplotlib_plot import MatplotlibPlotTerminal
 
