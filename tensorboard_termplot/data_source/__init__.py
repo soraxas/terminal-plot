@@ -1,0 +1,89 @@
+from abc import ABC, abstractmethod
+from argparse import ArgumentParser
+from typing import List, Dict
+
+import numpy as np
+
+
+class DataSource(ABC):
+    def __init__(self, args: ArgumentParser):
+        self.args = args
+
+    def get_all_scalar_names(self):
+        all_scalar_names = []
+        for figure_data in self:
+            # filter tags
+            all_scalar_names.extend(
+                figure_data.get_filtered_scalar_names(
+                    whitelist=self.args.whitelist, blacklist=self.args.blacklist
+                )
+            )
+        return all_scalar_names
+
+    def get_consolidated_stats(self) -> Dict[str, List[str]]:
+        """Return a consolidated version of stats to be plotted. Consolidation is based
+        on prefix.
+        E.g., a list of [Loss/train, Loss/test, Score/train, Score/test]
+        will returns a dictionary of
+        {'Loss': [Loss/train, Loss/test], 'Score': [Score/train, Score/test]}
+
+        :return: a dictionary that maps a prefix to a list of related stats
+        """
+        all_scalar_names = self.get_all_scalar_names()
+        if not self.args.consolidate:
+            # construct dummy dict in consistent with the consolidation version
+            return {scalar_name: [scalar_name] for scalar_name in all_scalar_names}
+
+        # combine related stats based on prefix
+        consolidated_stats = dict()
+        for scalar_name in all_scalar_names:
+            # e.g. Loss/train, Loss/test, etc.
+            prefix = scalar_name.split("/")[0]
+            stats = consolidated_stats.get(prefix, [])
+            stats.append(scalar_name)
+            consolidated_stats[prefix] = stats
+        return consolidated_stats
+
+    @abstractmethod
+    def __len__(self) -> int:
+        pass
+
+    @abstractmethod
+    def __getitem__(self, item) -> "FigureData":
+        pass
+
+
+class FigureData(ABC):
+    title: str
+    scalar_names: str
+
+    @abstractmethod
+    def get_series(self, *, x: str, y: str) -> np.ndarray:
+        pass
+
+    @property
+    def title(self):
+        raise NotImplementedError()
+
+    @property
+    def scalar_names(self):
+        raise NotImplementedError()
+
+    @abstractmethod
+    def refresh(self):
+        pass
+
+    def get_filtered_scalar_names(self, whitelist: List[str], blacklist: List[str]):
+        """Filter out scalar_names based on white and black list"""
+        filtered_scalar_names = self.scalar_names
+        if whitelist:
+            filtered_scalar_names = filter(
+                lambda name: any(keyword in name for keyword in whitelist),
+                filtered_scalar_names,
+            )
+        if blacklist:
+            filtered_scalar_names = filter(
+                lambda name: not any(keyword in name for keyword in blacklist),
+                filtered_scalar_names,
+            )
+        return list(filtered_scalar_names)

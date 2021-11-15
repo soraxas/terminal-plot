@@ -23,11 +23,11 @@ class Plotter(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def plot(self, *args, **kwargs):
+    def plot(self, label, *args, **kwargs):
         pass
 
     @abstractmethod
-    def scatter(self, *args, **kwargs):
+    def scatter(self, label, *args, **kwargs):
         pass
 
     @staticmethod
