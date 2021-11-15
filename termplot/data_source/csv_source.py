@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from tensorboard_termplot.data_source import DataSource, FigureData
-from tensorboard_termplot.main import EmptyEventFileError
+from termplot.data_source import DataSource, FigureData
+from termplot.main import EmptyEventFileError
 
 
 class CsvDataSource(DataSource):

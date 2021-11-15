@@ -1,8 +1,9 @@
 import argparse
 from typing import Dict
 
-from tensorboard_termplot.backend.base_plotter import Plotter
-from tensorboard_termplot.data_source import FigureData
+from termplot._version import __version__
+from termplot.backend.base_plotter import Plotter
+from termplot.data_source import FigureData
 
 
 def pair_of_num(arg):
@@ -31,9 +32,8 @@ def between_zero_and_one(arg):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "folder", metavar="FOLDER", type=str, help="Folder of a tensorboard runs"
-)
+parser.add_argument("folder", metavar="FOLDER", type=str, help="Source folder or file")
+parser.add_argument("--version", action="version", version=f"termplot {__version__}")
 
 # plotting generic flags
 parser.add_argument(
@@ -55,6 +55,11 @@ parser.add_argument(
     "-m",
     "--matplotlib",
     help="Alias of --backend matplotlib",
+    action="store_true",
+)
+parser.add_argument(
+    "--csv",
+    help="Alias of --data-source csv",
     action="store_true",
 )
 parser.add_argument(
@@ -321,30 +326,17 @@ def _plot_for_one_run(
             )
 
 
-def filter_stats(scalar_names, args):
-    if args.whitelist:
-        filtered_scalar_names = filter(
-            lambda name: any(keyword in name for keyword in args.whitelist),
-            scalar_names,
-        )
-    else:
-        filtered_scalar_names = list(scalar_names)
-    if args.blacklist:
-        filtered_scalar_names = filter(
-            lambda name: not any(keyword in name for keyword in args.blacklist),
-            filtered_scalar_names,
-        )
-    return list(filtered_scalar_names)
-
-
 def main(args):
     # set backend
     if args.backend == "plotext":
-        from backend.terminal_plot import TerminalPlot
+        from termplot.backend.terminal_plot import TerminalPlot
 
         plotter = TerminalPlot(args)
     elif args.backend == "matplotlib":
-        from backend.matplotlib_plot import MatplotlibPlot, MatplotlibPlotTerminal
+        from termplot.backend.matplotlib_plot import (
+            MatplotlibPlot,
+            MatplotlibPlotTerminal,
+        )
 
         if MatplotlibPlotTerminal.get_supported_backend() is not None:
             # automatically use terminal version of matplotlib, if supported.
@@ -352,20 +344,20 @@ def main(args):
         else:
             plotter = MatplotlibPlot(args)
     elif args.backend == "matplotlib-terminal":
-        from backend.matplotlib_plot import MatplotlibPlotTerminal
+        from termplot.backend.matplotlib_plot import MatplotlibPlotTerminal
 
         plotter = MatplotlibPlotTerminal(args)
     else:
         raise NotImplementedError()
     # set data source
     if args.data_source == "tensorboard":
-        from data_source.tensorboard_source import (
+        from termplot.data_source.tensorboard_source import (
             TensorboardDataSource,
         )
 
         DataSourceClass = TensorboardDataSource
     elif args.data_source == "csv":
-        from data_source.csv_source import (
+        from termplot.data_source.csv_source import (
             CsvDataSource,
         )
 
@@ -373,7 +365,7 @@ def main(args):
     else:
         raise NotImplementedError()
 
-    # ea = event_accumulator.EventAccumulator(args.folder)
+    ##################################################
 
     while True:
         plotter.clear_current_figure()
@@ -420,6 +412,8 @@ def run():
                 _args.ticks_color = "white"
         if _args.matplotlib:
             _args.backend = "matplotlib"
+        if _args.csv:
+            _args.data_source = "csv"
         main(_args)
     except KeyboardInterrupt:
         pass

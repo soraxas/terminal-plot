@@ -6,8 +6,8 @@ from pathlib import Path
 import numpy as np
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
-from tensorboard_termplot.data_source import DataSource, FigureData
-from tensorboard_termplot.main import EmptyEventFileError
+from termplot.data_source import DataSource, FigureData
+from termplot.main import EmptyEventFileError
 
 
 class TensorboardDataSource(DataSource):

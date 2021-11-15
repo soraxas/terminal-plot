@@ -1,62 +1,97 @@
-# Terminal-plot for Tensorboard
+# Terminal-plot for Tensorboard and CSV
 
-[![pypi](https://img.shields.io/pypi/v/tensorboard-termplot)](https://pypi.org/project/tensorboard-termplot/)
-[![python-version](https://img.shields.io/pypi/pyversions/tensorboard-termplot)](https://pypi.org/project/tensorboard-termplot/)
-[![Master Update](https://img.shields.io/github/last-commit/soraxas/tensorboard-termplot/master.svg)](https://github.com/soraxas/tensorboard-termplot/commits/master)
+[![pypi](https://img.shields.io/pypi/v/terminal-plot)](https://pypi.org/project/terminal-plot/)
+[![python-version](https://img.shields.io/pypi/pyversions/terminal-plot)](https://pypi.org/project/terminal-plot/)
+[![Master Update](https://img.shields.io/github/last-commit/soraxas/termplot/master.svg)](https://github.com/soraxas/termplot/commits/master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![License](https://img.shields.io/github/license/soraxas/tensorboard-termplot.svg)](https://github.com/soraxas/tensorboard-termplot/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/soraxas/termplot.svg)](https://github.com/soraxas/termplot/blob/master/LICENSE)
 
-A plotter for tensorboard, directly within your terminal. This is useful when you are training your neural network on a remote server, and you just want to quickly peek at the training curve without launching a tensorboard instance and mess with forwarding ports.
+A plotter for multiple different tensorboard, directly within your terminal. This is useful when you are training your neural network on a remote server, and you just want to quickly peek at the training curve without launching a tensorboard instance and mess with forwarding ports.
 
 ## Install
 
 You can install the package published in PyPI with
 ```sh
-$ pip install tensorboard-termplot
+$ pip install terminal-plot
+# or install with matplotlib backend dependency
+$ pip install terminal-plot[matplotlib-backend]
+
 # or install with an isolated environment
-# $ pipx install tensorboard-termplot
+# $ pipx install terminal-plot
 ```
 
 ## Usage
 
 ```sh
-$ tensorboard-termplot FOLDER
+$ termplot FOLDER/FILE
 ```
 For example,
 ```sh
-$ tensorboard-termplot ~/my_amazing_nn/runs
+$ termplot ~/my_amazing_nn/runs
 ```
 where `runs` is the folder that tensorboard had created.
 
+Or, using csv as a data source:
+```sh
+$ termplot ~/my_stats/output.csv --csv
+# use the -x flag to select which stat will be used as x-axis
+# $ termplot ~/my_stats/output.csv --csv -x time
+```
+
+Or, using matplotlib as a plotting backend:
+```sh
+$ termplot ~/my_stats/output.csv --csv -m
+```
 
 # Example
 
 Running the executable on a tensorboard output folder:
 
-![](https://raw.githubusercontent.com/soraxas/tensorboard-termplot/master/docs/images/example-output.png)
+![](https://raw.githubusercontent.com/soraxas/termplot/master/docs/images/example-output.png)
 
-Or with the consolidate flag `-c/--consolidate` to combine multiple stats with a common prefix (most stats in the bottom figure had empty values):
+Or with the consolidated flag `-c/--consolidate` to combine multiple stats with a common prefix (most stats in the bottom figure had empty values):
 
-![](https://raw.githubusercontent.com/soraxas/tensorboard-termplot/master/docs/images/example-output-consolidated.png)
+![](https://raw.githubusercontent.com/soraxas/termplot/master/docs/images/example-output-consolidated.png)
 
 
 # Help
 
 ```
-$ tensorboard-termplot --help
-usage: tensorboard-termplot [-h] [--canvas-color CANVAS_COLOR]
-                            [--axes-color AXES_COLOR]
-                            [--ticks-color TICKS_COLOR] [--colorless] [-d]
-                            [--grid] [--plotsize WIDTH,HEIGHT] [--force-label]
-                            [--no-iter-color] [-c] [-f] [-n secs]
-                            [--log_interval LOG_INTERVAL]
-                            FOLDER
+$ termplot --help
+usage: termplot [-h] [--version]
+                [--backend {plotext,matplotlib,matplotlib-terminal}]
+                [--data-source {tensorboard,csv}] [-m] [--csv]
+                [--plotsize WIDTH,HEIGHT] [-c] [--as-scatter]
+                [--canvas-color CANVAS_COLOR] [--axes-color AXES_COLOR]
+                [--ticks-color TICKS_COLOR] [--grid] [--colorless] [-d]
+                [--no-iter-color] [--force-label] [-f] [-n secs]
+                [-w keyword [keyword ...]] [-b keyword [keyword ...]]
+                [-x XAXIS_TYPE] [--xlog [row,col ...]] [--ylog [row,col ...]]
+                [--xsymlog [row,col ...]] [--ysymlog [row,col ...]]
+                [--xlim row,col=min,max [row,col=min,max ...]]
+                [--ylim row,col=min,max [row,col=min,max ...]] [--as-raw-bytes]
+                [-s [0-1]] [--smooth-poly-order poly-order]
+                [--terminal-width TERMINAL_WIDTH]
+                [--terminal-height TERMINAL_HEIGHT]
+                FOLDER
 
 positional arguments:
-  FOLDER                Folder of a tensorboard runs
+  FOLDER                Source folder or file
 
 optional arguments:
   -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  --backend {plotext,matplotlib,matplotlib-terminal}
+                        Set the plotting backend
+  --data-source {tensorboard,csv}
+                        Set the plotting data source
+  -m, --matplotlib      Alias of --backend matplotlib
+  --csv                 Alias of --data-source csv
+  --plotsize WIDTH,HEIGHT
+                        Manually set the size of each subplot, e.g., 50,20.
+  -c, --consolidate     Consolidate based on prefix. If -cc is given,
+                        everything will consolidated regardless of prefix
+  --as-scatter          Plot as scatter (instead of line plot)
   --canvas-color CANVAS_COLOR
                         set the color of the plot canvas (the area where the
                         data is plotted)
@@ -67,18 +102,44 @@ optional arguments:
   --ticks-color TICKS_COLOR
                         sets the (full-ground) color of the axes ticks and of
                         the grid lines.
+  --grid                Show grid.
   --colorless           Remove color.
   -d, --dark-theme      A collection of flags. If set, it is equivalent to
                         setting canvas-color and axes-color to black, and
                         setting ticks-color to red. Can be overwritten
                         individually.
-  --grid                Show grid.
-  --plotsize WIDTH,HEIGHT
-                        Manually set the size of each subplot, e.g., 50,20.
-  --force-label         Force showing label even for plot with one series.
   --no-iter-color       Stop iterating through different colors per plot.
-  -c, --consolidate     Consolidate based on prefix.
+  --force-label         Force showing label even for plot with one series.
   -f, --follow          Run in a loop to update display periodic.
   -n secs, --interval secs
                         seconds to wait between updates
+  -w keyword [keyword ...], --whitelist keyword [keyword ...]
+                        Keyword that the stat must contain for it to be
+                        plotted, case sensitive.
+  -b keyword [keyword ...], --blacklist keyword [keyword ...]
+                        Keyword that the stat must not contain for it to be
+                        plotted, case sensitive.
+  -x XAXIS_TYPE, --xaxis-type XAXIS_TYPE
+                        Set value type to be used for x-axis. Tensorboard only
+                        supports 'step' or 'time' as x-axis.
+  --xlog [row,col ...]  Set the list of subplots to use log scale in x-axis
+  --ylog [row,col ...]  Set the list of subplots to use log scale in y-axis
+  --xsymlog [row,col ...]
+                        Set the list of subplots to use symlog scale in x-axis
+  --ysymlog [row,col ...]
+                        Set the list of subplots to use symlog scale in y-axis
+  --xlim row,col=min,max [row,col=min,max ...]
+                        Set the list of xlim for the specified subplot.
+  --ylim row,col=min,max [row,col=min,max ...]
+                        Set the list of ylim for the specified subplot.
+  --as-raw-bytes        Writes the raw image bytes to stdout.
+  -s [0-1], --smooth [0-1]
+                        A value from 0 to 1 as a smoothing factor.
+  --smooth-poly-order poly-order
+                        Polynomial order for the savgol smoothing algorithm.
+  --terminal-width TERMINAL_WIDTH
+                        Manually set the terminal width.
+  --terminal-height TERMINAL_HEIGHT
+                        Manually set the terminal height.
+
 ```
