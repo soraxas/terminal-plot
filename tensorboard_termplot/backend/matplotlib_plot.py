@@ -1,6 +1,7 @@
 import io
 import os
 import sys
+from shutil import which
 from subprocess import Popen, PIPE, STDOUT
 
 import matplotlib.colors as mcolors
@@ -124,3 +125,29 @@ class MatplotlibPlot(Plotter):
     def generator_color_seq(self):
         while True:
             yield from mcolors.TABLEAU_COLORS
+
+
+class MatplotlibPlotTerminal(MatplotlibPlot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if which("timg"):
+            self.backend_program_cmds = ["timg", "-"]
+        elif which("kitty"):
+            self.backend_program_cmds = ["kitty", "+kitten", "icat"]
+        else:
+            raise RuntimeError("No supported program found (e.g. timg, .")
+
+    def show(self):
+        imgdata = io.BytesIO()
+        imgdata.seek(0)
+
+        program = Popen(
+            self.backend_program_cmds,
+            stdin=PIPE,
+            bufsize=-1,
+        )
+        # pipe image data to program
+        self.fig.savefig(program.stdin)
+
+        program.stdin.close()  # done (no more input)

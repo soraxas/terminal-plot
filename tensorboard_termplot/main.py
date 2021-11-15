@@ -8,6 +8,7 @@ from tensorboard.backend.event_processing import event_accumulator
 
 from tensorboard_termplot.backend.base_plotter import Plotter
 from tensorboard_termplot.backend.matplotlib_plot import MatplotlibPlot
+from tensorboard_termplot.backend.matplotlib_plot import MatplotlibPlotTerminal
 from tensorboard_termplot.backend.terminal_plot import TerminalPlot
 
 
@@ -46,11 +47,14 @@ parser.add_argument(
     "--backend",
     default="plotext",
     help="Set the plotting backend",
-    choices=["plotext", "matplotlib"],
+    choices=["plotext", "matplotlib", "matplotlib-terminal"],
     type=str,
 )
 parser.add_argument(
-    "-m", "--matplotlib", help="Alias of --backend matplotlib", action="store_true",
+    "-m",
+    "--matplotlib",
+    help="Alias of --backend matplotlib",
+    action="store_true",
 )
 parser.add_argument(
     "--plotsize",
@@ -188,7 +192,9 @@ parser.add_argument(
 
 # matplotlib backend specific
 parser.add_argument(
-    "--as-raw-bytes", action="store_true", help="Writes the raw image bytes to stdout.",
+    "--as-raw-bytes",
+    action="store_true",
+    help="Writes the raw image bytes to stdout.",
 )
 parser.add_argument(
     "--timg",
@@ -214,10 +220,14 @@ parser.add_argument(
 
 # plotext backend specific
 parser.add_argument(
-    "--terminal-width", type=int, help="Manually set the terminal width.",
+    "--terminal-width",
+    type=int,
+    help="Manually set the terminal width.",
 )
 parser.add_argument(
-    "--terminal-height", type=int, help="Manually set the terminal height.",
+    "--terminal-height",
+    type=int,
+    help="Manually set the terminal height.",
 )
 
 
@@ -362,6 +372,8 @@ def main(args):
         plotter = TerminalPlot(args)
     elif args.backend == "matplotlib":
         plotter = MatplotlibPlot(args)
+    elif args.backend == "matplotlib-terminal":
+        plotter = MatplotlibPlotTerminal(args)
     else:
         raise NotImplementedError()
 
