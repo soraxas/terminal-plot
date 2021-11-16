@@ -2,11 +2,11 @@
 
 [![pypi](https://img.shields.io/pypi/v/terminal-plot)](https://pypi.org/project/terminal-plot/)
 [![python-version](https://img.shields.io/pypi/pyversions/terminal-plot)](https://pypi.org/project/terminal-plot/)
-[![Master Update](https://img.shields.io/github/last-commit/soraxas/termplot/master.svg)](https://github.com/soraxas/termplot/commits/master)
+[![Master Update](https://img.shields.io/github/last-commit/soraxas/terminal-plot/master.svg)](https://github.com/soraxas/terminal-plot/commits/master)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![License](https://img.shields.io/github/license/soraxas/termplot.svg)](https://github.com/soraxas/termplot/blob/master/LICENSE)
+[![License](https://img.shields.io/github/license/soraxas/terminal-plot.svg)](https://github.com/soraxas/terminal-plot/blob/master/LICENSE)
 
-A plotter for multiple different tensorboard, directly within your terminal. This is useful when you are training your neural network on a remote server, and you just want to quickly peek at the training curve without launching a tensorboard instance and mess with forwarding ports.
+A plotter for multiple different data source (e.g. tensorboard, csv), directly within your terminal. This is useful when you are training your neural network on a remote server, and you just want to quickly peek at the training curve without launching a tensorboard instance and mess with forwarding ports.
 
 ## Install
 
@@ -17,7 +17,7 @@ $ pip install terminal-plot
 $ pip install terminal-plot[matplotlib-backend]
 
 # or install with an isolated environment
-# $ pipx install terminal-plot
+# $ pipx install terminal-plot[matplotlib-backend]
 ```
 
 ## Usage
