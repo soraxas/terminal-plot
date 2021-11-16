@@ -40,6 +40,7 @@ setup(
         "pandas",
         "numpy",
         "scipy",
+        "argcomplete",
     ],
     extras_require={"matplotlib-backend": ["matplotlib", "pillow"]},
     entry_points={
