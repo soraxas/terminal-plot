@@ -20,6 +20,13 @@ $ pip install terminal-plot[matplotlib-backend]
 # $ pipx install terminal-plot[matplotlib-backend]
 ```
 
+## Autocomplete
+
+You can use [`argcomplete`](https://kislyuk.github.io/argcomplete) to enable autocomplete for this script. For example, you can use the following for the fish shell:
+```sh
+register-python-argcomplete --shell fish termplot > ~/.config/fish/completions/termplot.fish
+```
+
 ## Usage
 
 ```sh

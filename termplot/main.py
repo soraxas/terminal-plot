@@ -1,4 +1,4 @@
-import argparse
+import argcomplete, argparse
 from typing import Dict
 
 from termplot._version import __version__
@@ -400,6 +400,7 @@ def main(args):
 
 def run():
     try:
+        argcomplete.autocomplete(parser)
         _args = parser.parse_args()
         # handles alias of options
         if _args.dark_theme:
