@@ -165,6 +165,9 @@ class Plotter(metaclass=ABCMeta):
     def generator_color_seq(self):
         pass
 
+    def close(self):
+        pass
+
     def get_colors(self):
         if self.args.no_iter_color:
             return self.fixed_color_seq

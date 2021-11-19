@@ -41,6 +41,7 @@ setup(
         "numpy",
         "scipy",
         "argcomplete",
+        "watchdog",
     ],
     extras_require={"matplotlib-backend": ["matplotlib", "pillow"]},
     entry_points={

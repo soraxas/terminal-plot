@@ -132,6 +132,9 @@ class MatplotlibPlot(Plotter):
         while True:
             yield from mcolors.TABLEAU_COLORS
 
+    def close(self):
+        plt.close(self.fig)
+
 
 class MatplotlibPlotTerminal(MatplotlibPlot):
     def __init__(self, args):

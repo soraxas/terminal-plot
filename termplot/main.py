@@ -374,6 +374,7 @@ def plot_logic(
         plotter.as_image_raw_bytes()
     else:
         plotter.show()
+    plotter.close()
 
 
 def main(args):
