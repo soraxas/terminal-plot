@@ -65,9 +65,9 @@ Or with the consolidated flag `-c/--consolidate` to combine multiple stats with 
 
 ```
 $ termplot --help
-usage: termplot [-h] [--version]
+usage: termplot [-h] [--version] [--debug]
                 [--backend {plotext,matplotlib,matplotlib-terminal}]
-                [--data-source {tensorboard,csv}] [-m] [--csv]
+                [--data-source {tensorboard,csv}] [-m] [--csv] [--latest]
                 [--plotsize WIDTH,HEIGHT] [-c] [--as-scatter]
                 [--canvas-color CANVAS_COLOR] [--axes-color AXES_COLOR]
                 [--ticks-color TICKS_COLOR] [--grid] [--colorless] [-d]
@@ -76,8 +76,8 @@ usage: termplot [-h] [--version]
                 [-x XAXIS_TYPE] [--xlog [row,col ...]] [--ylog [row,col ...]]
                 [--xsymlog [row,col ...]] [--ysymlog [row,col ...]]
                 [--xlim row,col=min,max [row,col=min,max ...]]
-                [--ylim row,col=min,max [row,col=min,max ...]] [--as-raw-bytes]
-                [-s [0-1]] [--smooth-poly-order poly-order]
+                [--ylim row,col=min,max [row,col=min,max ...]]
+                [--as-raw-bytes] [-s [0-1]] [--smooth-poly-order poly-order]
                 [--terminal-width TERMINAL_WIDTH]
                 [--terminal-height TERMINAL_HEIGHT]
                 FOLDER
@@ -88,12 +88,16 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --version             show program's version number and exit
+  --debug
   --backend {plotext,matplotlib,matplotlib-terminal}
                         Set the plotting backend
   --data-source {tensorboard,csv}
                         Set the plotting data source
   -m, --matplotlib      Alias of --backend matplotlib
   --csv                 Alias of --data-source csv
+  --latest, -l          Monitor the given folder, and always plot the latest
+                        modified. The given argument must be a folder if this
+                        flag is set.
   --plotsize WIDTH,HEIGHT
                         Manually set the size of each subplot, e.g., 50,20.
   -c, --consolidate     Consolidate based on prefix. If -cc is given,

@@ -7,13 +7,13 @@ import numpy as np
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
 from termplot.data_source import DataSource, FigureData
-from termplot.main import EmptyEventFileError
+from termplot.etc import EmptyEventFileError
 
 
 class TensorboardDataSource(DataSource):
-    def __init__(self, args: ArgumentParser):
-        super().__init__(args)
-        folder = Path(self.args.folder)
+    def __init__(self, folder: str, args: ArgumentParser):
+        super().__init__(folder, args)
+        folder = Path(self.folder)
         figures = []
 
         def _add_figure(_folder):
@@ -104,3 +104,6 @@ class TensorboardFigureData(FigureData):
             wall_t_origin = min(wall_t_origin, wall_t[0])
 
         return wall_t_origin
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}<folder={self.folder}|ea={self.ea}>"

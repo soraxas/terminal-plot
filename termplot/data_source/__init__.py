@@ -6,7 +6,8 @@ import numpy as np
 
 
 class DataSource(ABC):
-    def __init__(self, args: ArgumentParser):
+    def __init__(self, folder: str, args: ArgumentParser):
+        self.folder = folder
         self.args = args
 
     def get_all_scalar_names(self):

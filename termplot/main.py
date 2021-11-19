@@ -1,9 +1,18 @@
-import argcomplete, argparse
+import argparse
+import logging
+from pathlib import Path
 from typing import Dict
+from typing import Union, Type
+
+import argcomplete
 
 from termplot._version import __version__
 from termplot.backend.base_plotter import Plotter
-from termplot.data_source import FigureData
+from termplot.data_source import FigureData, DataSource
+from termplot.etc import EmptyEventFileError
+from termplot.fs_monitor import FilesystemMonitor
+
+LOGGER = logging.getLogger(__file__)
 
 
 def pair_of_num(arg):
@@ -34,6 +43,7 @@ def between_zero_and_one(arg):
 parser = argparse.ArgumentParser()
 parser.add_argument("folder", metavar="FOLDER", type=str, help="Source folder or file")
 parser.add_argument("--version", action="version", version=f"termplot {__version__}")
+parser.add_argument("--debug", action="store_true")
 
 # plotting generic flags
 parser.add_argument(
@@ -60,6 +70,13 @@ parser.add_argument(
 parser.add_argument(
     "--csv",
     help="Alias of --data-source csv",
+    action="store_true",
+)
+parser.add_argument(
+    "--latest",
+    "-l",
+    help="Monitor the given folder, and always plot the latest modified. "
+    "The given argument must be a folder if this flag is set.",
     action="store_true",
 )
 parser.add_argument(
@@ -243,10 +260,6 @@ parser.add_argument(
 )
 
 
-class EmptyEventFileError(Exception):
-    pass
-
-
 def ensure_odd(x: int, roundup: bool):
     if x % 2 == 0:
         if roundup:
@@ -326,7 +339,48 @@ def _plot_for_one_run(
             )
 
 
+def plot_logic(
+    folder: Union[str, Path],
+    plotter: Plotter,
+    DataSourceClass: Type[DataSource],
+) -> None:
+    """
+    Main plotting logic
+
+    :param folder: The target folder
+    :param plotter: An instance of backend plotter
+    :param DataSourceClass: The class to be used to consume the target input
+    """
+    # while terminate_cond:
+    plotter.clear_current_figure()
+
+    data_source = DataSourceClass(folder, plotter.args)
+
+    # Get the maximum number of subplots across all folder
+    max_plots = len(data_source.get_consolidated_stats())
+
+    # create the master plot of all folders
+    plotter.create_subplot(max_plots, len(data_source))
+    LOGGER.debug("created subplot with size (%s, %s)", max_plots, len(data_source))
+
+    # do the actual plotting
+    for i, figure_data in enumerate(data_source):
+        # plot the column of subplots for this folder
+        LOGGER.debug("plot with %s with data %s", plotter.__class__, figure_data)
+        _plot_for_one_run(plotter, figure_data, data_source.get_consolidated_stats(), i)
+
+    plotter.clear_terminal_printed_lines()
+    if plotter.args.as_raw_bytes:
+        plotter.as_image_raw_bytes()
+    else:
+        plotter.show()
+
+
 def main(args):
+    if args.debug:
+        logging.basicConfig(filename="debug.log", encoding="utf-8", level=logging.DEBUG)
+
+    LOGGER.debug("args: %s", args)
     # set backend
     if args.backend == "plotext":
         from termplot.backend.terminal_plot import TerminalPlot
@@ -367,35 +421,43 @@ def main(args):
 
     ##################################################
 
-    while True:
-        plotter.clear_current_figure()
+    monitor = FilesystemMonitor(args.folder)
 
-        # First loop through and find the maximum number of subplots across all folder
-        # first, in case some folders have more subplots than others, will take the max
-        max_plots = 1
+    target_input = args.folder
+    if args.latest:
+        if not Path(args.folder).is_dir():
+            raise ValueError(f"The given path {args.folder} is not a folder")
+        monitor.created_new_file = True
 
-        data_source = DataSourceClass(args)
+    try:
+        # this while loop will ends if --follow is not given
+        while True:
+            if args.latest and monitor.created_new_file:
+                # switch the input target to the latest file/folder
+                target_input = monitor.get_latest_modified_folder()
+                monitor.reset_condition()
+            try:
+                plot_logic(
+                    target_input,
+                    plotter,
+                    DataSourceClass,
+                )
+                if not plotter.args.follow:
+                    break
+                # sleep to reduce update frequency
+                plotter.sleep()
+                # we will wait for filesystem to notify us when there's new update
+                monitor.wait_till_new_modification()
 
-        max_plots = max(max_plots, len(data_source.get_consolidated_stats()))
+            except EmptyEventFileError as e:
+                if not (args.latest and plotter.args.follow):
+                    raise e
+                monitor.wait_till_new_modification()
 
-        # create the master plot of all folders
-        plotter.create_subplot(max_plots, len(data_source))
-
-        # do the actual plotting
-        for i, figure_data in enumerate(data_source):
-            # plot the column of subplots for this folder
-            _plot_for_one_run(
-                plotter, figure_data, data_source.get_consolidated_stats(), i
-            )
-
-        plotter.clear_terminal_printed_lines()
-        if args.as_raw_bytes:
-            plotter.as_image_raw_bytes()
-        else:
-            plotter.show()
-        if not args.follow:
-            break
-        plotter.sleep()
+    # except KeyboardInterrupt:
+    #     monitor.stop()
+    finally:
+        monitor.stop()
 
 
 def run():

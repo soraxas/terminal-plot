@@ -6,13 +6,13 @@ import numpy as np
 import pandas as pd
 
 from termplot.data_source import DataSource, FigureData
-from termplot.main import EmptyEventFileError
+from termplot.etc import EmptyEventFileError
 
 
 class CsvDataSource(DataSource):
-    def __init__(self, args: ArgumentParser):
-        super().__init__(args)
-        path = Path(self.args.folder)
+    def __init__(self, folder: str, args: ArgumentParser):
+        super().__init__(folder, args)
+        path = Path(self.folder)
         self.figures = []
 
         if os.path.isfile(path) and os.path.basename(path).endswith(".csv"):
@@ -64,3 +64,6 @@ class CsvFigureData(FigureData):
     @property
     def scalar_names(self):
         return list(self.df.columns)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}<path={self.path}|df={self.df}>"

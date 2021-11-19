@@ -1,0 +1,2 @@
+class EmptyEventFileError(Exception):
+    pass
