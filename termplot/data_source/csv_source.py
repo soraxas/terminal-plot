@@ -1,4 +1,3 @@
-import os
 from argparse import ArgumentParser
 from pathlib import Path
 
@@ -10,21 +9,21 @@ from termplot.etc import EmptyEventFileError
 
 
 class CsvDataSource(DataSource):
-    def __init__(self, folder: str, args: ArgumentParser):
-        super().__init__(folder, args)
-        path = Path(self.folder)
+    def __init__(self, input_file: Path, args: ArgumentParser):
+        super().__init__(input_file, args)
         self.figures = []
 
-        if os.path.isfile(path) and os.path.basename(path).endswith(".csv"):
-            # the given 'folder' is the actual csv file
-            self.figures.append(CsvFigureData(path))
-        elif os.path.isdir(path):
-            # the given 'folder' is a folder
-            for csv_file in path.glob("*.csv"):
+        if self.input.is_file():
+            if self.input.name.endswith(".csv"):
+                # the given 'input' is the actual csv file
+                self.figures.append(CsvFigureData(self.input))
+        else:  # is a folder
+            # the given 'input' is a folder that contains csv file
+            for csv_file in self.input.glob("*.csv"):
                 self.figures.append(CsvFigureData(csv_file))
 
         if len(self.figures) == 0:
-            raise ValueError(f"Unable to find csv files within '{path}'.")
+            raise ValueError(f"Unable to find csv files within '{self.input}'.")
 
     def __len__(self):
         return len(self.figures)
@@ -48,7 +47,6 @@ class CsvFigureData(FigureData):
     def refresh(self):
         pass
 
-    # def get_series(self, *, x, y, scalar_name: str):
     def get_series(self, *, x: str, y: str):
         y_values = self.df[y]
         if x == "step":

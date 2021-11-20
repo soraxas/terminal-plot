@@ -1,4 +1,3 @@
-import os
 from argparse import ArgumentParser
 from functools import lru_cache
 from pathlib import Path
@@ -11,39 +10,38 @@ from termplot.etc import EmptyEventFileError
 
 
 class TensorboardDataSource(DataSource):
-    def __init__(self, folder: str, args: ArgumentParser):
-        super().__init__(folder, args)
-        folder = Path(self.folder)
-        figures = []
+    def __init__(self, input_file: Path, args: ArgumentParser):
+        super().__init__(input_file, args)
+        self.figures = []
 
         def _add_figure(_folder):
             _folder = str(_folder)
-            figures.append(
+            self.figures.append(
                 TensorboardFigureData(
                     ea=EventAccumulator(_folder),
                     folder=_folder,
                 )
             )
 
-        if os.path.basename(folder).startswith("events.out."):
-            # the given 'folder' is the actual event file
-            _add_figure(folder)
-        elif next(folder.glob("events.out.*"), None) is not None:
-            # the given folder is the actual event folder
-            _add_figure(folder)
-        else:
-            # the given folder nest multiple event folders
-            for folder in folder.iterdir():
-                # ensure they are event folder
-                if next(folder.glob("events.out.*"), None) is not None:
-                    _add_figure(folder)
+        if self.input.is_file():
+            if self.input.name.startswith("events.out."):
+                # the given 'folder' is the actual event file
+                _add_figure(self.input)
+        else:  # is a folder
+            if next(self.input.glob("events.out.*"), None) is not None:
+                # the given folder is the actual event folder
+                _add_figure(self.input)
+            else:
+                # the given folder nest multiple event folders
+                for folder in self.input.iterdir():
+                    # ensure they are event folder
+                    if next(folder.glob("events.out.*"), None) is not None:
+                        _add_figure(folder)
 
-        if len(figures) == 0:
+        if len(self.figures) == 0:
             raise ValueError(
-                f"Unable to find tensorboard event files within '{folder}'."
+                f"Unable to find tensorboard event files within '{self.input}'."
             )
-
-        self.figures = figures
 
     def __len__(self):
         return len(self.figures)
@@ -68,7 +66,6 @@ class TensorboardFigureData(FigureData):
     def refresh(self):
         self.ea.Reload()
 
-    # def get_series(self, *, x, y, scalar_name: str):
     def get_series(self, *, x: str, y: str):
         if x not in ("step", "time"):
             raise ValueError("Tensorboard only support 'step' or 'time' as x-axis")
@@ -82,7 +79,7 @@ class TensorboardFigureData(FigureData):
         return x_values, vals
 
     @property
-    def title(self):
+    def title(self) -> str:
         return self.ea.path
 
     @property

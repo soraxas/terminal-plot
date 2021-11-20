@@ -1,14 +1,17 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
+from pathlib import Path
 from typing import List, Dict
 
 import numpy as np
 
 
 class DataSource(ABC):
-    def __init__(self, folder: str, args: ArgumentParser):
-        self.folder = folder
+    def __init__(self, input_file: Path, args: ArgumentParser):
+        self.input = Path(input_file)
         self.args = args
+        if not self.input.exists():
+            raise RuntimeError(f"The given input file '{self.input}' does not exists")
 
     def get_all_scalar_names(self):
         all_scalar_names = []

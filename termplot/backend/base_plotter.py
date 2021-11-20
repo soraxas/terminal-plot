@@ -8,6 +8,7 @@ class UnsupportedOption(NotImplementedError):
     pass
 
 
+# noinspection SpellCheckingInspection
 class Plotter(metaclass=ABCMeta):
     def __init__(self, args: argparse.ArgumentParser):
         self.args = args
@@ -107,9 +108,6 @@ class Plotter(metaclass=ABCMeta):
         raise UnsupportedOption(inspect.currentframe().f_code.co_name)
 
     def as_image_raw_bytes(self):
-        raise UnsupportedOption(inspect.currentframe().f_code.co_name)
-
-    def canvas_color(self):
         raise UnsupportedOption(inspect.currentframe().f_code.co_name)
 
     def canvas_color(self):

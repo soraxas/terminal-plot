@@ -28,8 +28,6 @@ class MyHandler(FileSystemEventHandler):
     def on_modified(self, event):
         self.callback(event)
 
-    #     # print("on_modify", event)
-
 
 class FilesystemMonitor:
     def __init__(self, folder: str):

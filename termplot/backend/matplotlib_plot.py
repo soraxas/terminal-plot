@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 from .base_plotter import Plotter
 
 
+# noinspection SpellCheckingInspection,PyAttributeOutsideInit
 class MatplotlibPlot(Plotter):
     @property
     def unsupported_options(self):

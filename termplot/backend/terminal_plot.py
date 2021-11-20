@@ -4,6 +4,7 @@ import plotext._utility as plt_util
 from .base_plotter import Plotter
 
 
+# noinspection SpellCheckingInspection
 class TerminalPlot(Plotter):
     @property
     def unsupported_options(self):
