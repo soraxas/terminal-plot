@@ -35,7 +35,9 @@ class CsvDataSource(DataSource):
 
 
 class CsvFigureData(FigureData):
-    def __init__(self, path: str):
+    def __init__(self, path: str, remove_nan: bool = True):
+        # decide whether we should try to clean up nan values
+        self.remove_nan = remove_nan
         self.path = path
         self.df = pd.read_csv(path)
         self.refresh()
@@ -53,6 +55,16 @@ class CsvFigureData(FigureData):
             x_values = np.arange(len(y_values))
         else:
             x_values = self.df[x]
+        if self.remove_nan:
+            # remove nan values in x
+            _mapping = np.isfinite(x_values)
+            x_values = x_values[_mapping]
+            y_values = y_values[_mapping]
+            # remove nan values in y
+            _mapping = np.isfinite(y_values)
+            y_values = y_values[_mapping]
+            x_values = x_values[_mapping]
+
         return x_values, y_values
 
     @property
