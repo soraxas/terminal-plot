@@ -112,17 +112,17 @@ class MatplotlibPlot(Plotter):
         return string_io_bytes.read()
 
     def as_image_raw_bytes(self):
-        if self.args.timg:
-            size = os.get_terminal_size()
-            my_env = os.environ.copy()
-            popen_args = ["timg", "-", f"-g{size.columns}x{size.lines}"]
-            if my_env["TERM"] == "xterm-kitty":
-                popen_args += ["-pkitty"]
-            p = Popen(popen_args, stdout=PIPE, stdin=PIPE, stderr=STDOUT, env=my_env)
-            grep_stdout = p.communicate(input=self._get_image_raw_bytes())[0]
-            sys.stdout.write(grep_stdout.decode())
-        else:
-            sys.stdout.buffer.write(self._get_image_raw_bytes())
+        # if self.args.timg:
+        #     size = os.get_terminal_size()
+        #     my_env = os.environ.copy()
+        #     popen_args = ["timg", "-", f"-g{size.columns}x{size.lines}"]
+        #     if my_env["TERM"] == "xterm-kitty":
+        #         popen_args += ["-pkitty"]
+        #     p = Popen(popen_args, stdout=PIPE, stdin=PIPE, stderr=STDOUT, env=my_env)
+        #     grep_stdout = p.communicate(input=self._get_image_raw_bytes())[0]
+        #     sys.stdout.write(grep_stdout.decode())
+        # else:
+        sys.stdout.buffer.write(self._get_image_raw_bytes())
 
     @property
     def fixed_color_seq(self):

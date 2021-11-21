@@ -72,7 +72,7 @@ class TerminalPlot(Plotter):
         if self.args.terminal_width and self.args.terminal_height:
             import mock
 
-            with mock.patch("os.get_terminal_size") as MockClass:
+            with mock.patch("shutil.get_terminal_size") as MockClass:
                 MockClass.return_value = (
                     self.args.terminal_width,
                     self.args.terminal_height,
