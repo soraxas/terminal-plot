@@ -83,10 +83,28 @@ class TerminalPlot(Plotter):
 
     @property
     def fixed_color_seq(self):
-        return plt_util.color.color_sequence
+        # return plt_util.color.color_sequence
+        return [
+            "bright-blue",
+            "red",
+            "magenta",
+            "green",
+            "black",
+            "bright-magenta",
+            "bright-red",
+            "yellow",
+            "blue",
+            "default",
+            "cyan",
+            "white",
+            "bright-black",
+            "bright-green",
+            "bright-cyan",
+            "bright-white",
+            "bright-yellow",
+        ]
 
     @property
     def generator_color_seq(self):
         while True:
-            for c in self.fixed_color_seq:
-                yield c
+            yield from self.fixed_color_seq
