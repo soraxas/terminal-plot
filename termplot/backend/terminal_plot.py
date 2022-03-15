@@ -11,7 +11,7 @@ class TerminalPlot(Plotter):
         return ["xsymlog", "ysymlog"]
 
     def plot(self, *args, label="", **kwargs):
-        plt.plot(*args, label=label, **kwargs)
+        plt.plot(*args, label=label, marker="fhd", **kwargs)
 
     def scatter(self, *args, label="", **kwargs):
         plt.scatter(*args, label=label, **kwargs)
