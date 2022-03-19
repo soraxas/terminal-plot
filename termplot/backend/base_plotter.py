@@ -70,11 +70,11 @@ class Plotter(metaclass=ABCMeta):
             (self.args.ylim, self.ylim),
         ]:
             if _lim_arg is not None:
-                try:
-                    index = [x[0] for x in _lim_arg].index((cur_row, cur_col))
-                except ValueError:
-                    continue
-                _lim_func(cur_row, cur_col, _lim_arg[index][1])
+                for _target_idx, _target_limit in _lim_arg:
+                    if (_target_idx is None) or (_target_idx == (cur_row, cur_col)):
+                        # None is wildcard, always applies
+                        _lim_func(cur_row, cur_col, _target_limit)
+                        break
 
     def legend(self):
         pass

@@ -28,7 +28,9 @@ def pair_of_int(arg):
 
 def pair_of_num_assign_pair_of_num(arg):
     arg = arg.split("=")
-    if len(arg) != 2:
+    if len(arg) == 1:
+        return None, pair_of_num(arg[0])
+    elif len(arg) != 2:
         raise ValueError("It must be in the format of a,b=c,d (e.g. 30.0,20=30.2,45)")
     return tuple(map(pair_of_num, arg))
 
