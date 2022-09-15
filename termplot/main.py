@@ -58,7 +58,7 @@ parser.add_argument(
 # plotting generic flags
 parser.add_argument(
     "--data-source",
-    default="tensorboard",
+    default="auto",
     help="Set the plotting data source",
     choices=["tensorboard", "csv"],
     type=str,
@@ -384,6 +384,13 @@ def main(args):
         logging.basicConfig(filename="debug.log", encoding="utf-8", level=logging.DEBUG)
 
     LOGGER.debug("args: %s", args)
+    if args.data_source == "auto":
+        # try to detect the data type
+        if args.folder.endswith(".csv"):
+            args.data_source = "csv"
+        else:
+            args.data_source = "tensorboard"
+
     # set backend
     if args.backend == "plotext":
         from termplot.backend.terminal_plot import TerminalPlot
