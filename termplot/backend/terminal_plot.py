@@ -1,3 +1,6 @@
+import pandas as pd
+import numpy as np
+import plotext
 import plotext as plt
 import plotext._utility as plt_util
 
@@ -10,11 +13,22 @@ class TerminalPlot(Plotter):
     def unsupported_options(self):
         return ["xsymlog", "ysymlog"]
 
+    def _args_transformer(self, args):
+        for arg in args:
+            if isinstance(arg, pd.Series):
+                if pd.core.dtypes.common.is_datetime_or_timedelta_dtype(arg):
+                    arg = plotext.datetimes_to_string(arg)
+
+            # if isinstance(arg, (pd.Series, np.ndarray)):
+            #     arg = list(arg)
+
+            yield arg
+
     def plot(self, *args, label="", **kwargs):
-        plt.plot(*args, label=label, marker="fhd", **kwargs)
+        plt.plot(*self._args_transformer(args), label=label, marker="fhd", **kwargs)
 
     def scatter(self, *args, label="", **kwargs):
-        plt.scatter(*args, label=label, **kwargs)
+        plt.scatter(*self._args_transformer(args), label=label, **kwargs)
 
     def xlabel(self, xlabel, **kwargs):
         plt.xlabel(xlabel)

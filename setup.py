@@ -35,7 +35,7 @@ setup(
     ],
     install_requires=[
         "tensorboard>=2.5",
-        "plotext>=4.2.0",
+        "plotext==5.0.2",
         "mock",
         "pandas",
         "numpy",

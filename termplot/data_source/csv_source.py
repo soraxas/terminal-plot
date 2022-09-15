@@ -49,6 +49,24 @@ class CsvFigureData(FigureData):
     def refresh(self):
         pass
 
+    @staticmethod
+    def remove_nan_values(x_values, y_values, reference_values):
+        try:
+            _mapping = np.isfinite(reference_values)
+        except TypeError:
+            pass
+        else:
+            x_values = x_values[_mapping]
+            y_values = y_values[_mapping]
+        return x_values, y_values
+
+    @staticmethod
+    def try_obj_to_datetime(series: pd.Series):
+        if series.dtype == np.object:
+            # try to convert to datetime
+            series = pd.to_datetime(series)
+        return series
+
     def get_series(self, *, x: str, y: str):
         y_values = self.df[y]
         if x == "step":
@@ -57,13 +75,12 @@ class CsvFigureData(FigureData):
             x_values = self.df[x]
         if self.remove_nan:
             # remove nan values in x
-            _mapping = np.isfinite(x_values)
-            x_values = x_values[_mapping]
-            y_values = y_values[_mapping]
+            self.remove_nan_values(x_values, y_values, reference_values=x_values)
             # remove nan values in y
-            _mapping = np.isfinite(y_values)
-            y_values = y_values[_mapping]
-            x_values = x_values[_mapping]
+            self.remove_nan_values(x_values, y_values, reference_values=y_values)
+
+        x_values = self.try_obj_to_datetime(x_values)
+        y_values = self.try_obj_to_datetime(y_values)
 
         return x_values, y_values
 
