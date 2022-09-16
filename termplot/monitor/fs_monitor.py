@@ -2,6 +2,8 @@ import os
 import threading
 from pathlib import Path
 
+from termplot.monitor import AbstractMonitor
+
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -29,20 +31,26 @@ class MyHandler(FileSystemEventHandler):
         self.callback(event)
 
 
-class FilesystemMonitor:
+class FilesystemMonitor(AbstractMonitor):
     def __init__(self, folder: str):
         self.folder = folder
         self.new_modify = threading.Event()
         # self.created_new_file = TerminateCondition()
-        self.created_new_file = False
+        self._created_new_file = False
 
         event_handler = MyHandler(folder, callback=self.callback)
         self.observer = Observer()
         self.observer.schedule(event_handler, path=folder, recursive=True)
         self.observer.start()
 
+    def should_refresh(self):
+        return self._created_new_file
+
+    def set_should_refresh(self):
+        self._created_new_file = True
+
     def reset_condition(self):
-        self.created_new_file = False
+        self._created_new_file = False
 
     def start(self):
         self.observer.start()
@@ -50,14 +58,14 @@ class FilesystemMonitor:
     def stop(self):
         self.observer.stop()
 
-    def get_latest_modified_folder(self):
+    def get_latest(self):
         folders = sorted(Path(self.folder).iterdir(), key=os.path.getmtime)
         return folders[-1]
 
     def callback(self, event):
         if event.event_type == "created":
             # print("on_created", event.src_path)
-            self.created_new_file = True
+            self.set_should_refresh()
         self.new_modify.set()
 
     def wait_till_new_modification(self):

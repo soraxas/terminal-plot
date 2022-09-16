@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from pathlib import Path
 from typing import Dict
 from typing import Union, Type
@@ -10,7 +11,8 @@ from termplot._version import __version__
 from termplot.backend.base_plotter import Plotter
 from termplot.data_source import FigureData, DataSource
 from termplot.etc import EmptyEventFileError
-from termplot.fs_monitor import FilesystemMonitor
+from termplot.monitor import AbstractMonitor
+from termplot.monitor.fs_monitor import FilesystemMonitor
 
 LOGGER = logging.getLogger(__file__)
 
@@ -43,7 +45,9 @@ def between_zero_and_one(arg):
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument("folder", metavar="FOLDER", type=str, help="Source folder or file")
+parser.add_argument(
+    "folder", metavar="FOLDER", type=str, help="Source folder or file", nargs="?"
+)
 parser.add_argument("--version", action="version", version=f"termplot {__version__}")
 parser.add_argument("--debug", action="store_true")
 
@@ -342,21 +346,21 @@ def _plot_for_one_run(
 
 
 def plot_logic(
-    folder: Union[str, Path],
+    target_input: Union[str, Path],
     plotter: Plotter,
     DataSourceClass: Type[DataSource],
 ) -> None:
     """
     Main plotting logic
 
-    :param folder: The target folder
+    :param target_input: The target folder, or string buffer
     :param plotter: An instance of backend plotter
     :param DataSourceClass: The class to be used to consume the target input
     """
     # while terminate_cond:
     plotter.clear_current_figure()
 
-    data_source = DataSourceClass(folder, plotter.args)
+    data_source = DataSourceClass(target_input, plotter.args)
 
     # Get the maximum number of subplots across all folder
     max_plots = len(data_source.get_consolidated_stats())
@@ -412,7 +416,7 @@ def main(args):
 
         plotter = MatplotlibPlotTerminal(args)
     else:
-        raise NotImplementedError()
+        raise NotImplementedError(f"Backend specified: {args.backend}")
     # set data source
     if args.data_source == "tensorboard":
         from termplot.data_source.tensorboard_source import (
@@ -426,26 +430,55 @@ def main(args):
         )
 
         DataSourceClass = CsvDataSource
+    elif args.data_source == "stdin-csv":
+        from termplot.data_source.stdin_csv_source import (
+            StdinCsvDataSource,
+        )
+
+        DataSourceClass = StdinCsvDataSource
+    else:
+        raise NotImplementedError(f"Datasource specified: {args.data_source}")
+
+    ##################################################
+
+    monitor: AbstractMonitor = AbstractMonitor()
+    if args.data_source in ("tensorboard", "csv"):
+        monitor = FilesystemMonitor(args.folder)
+        target_input = args.folder
+    elif args.data_source in ("stdin-csv",):
+        from termplot.monitor.stdin_monitor import StdinMonitor
+
+        monitor = StdinMonitor()
+        while len(monitor.buffer) < 2:
+            monitor.wait_till_new_modification()
+        target_input = monitor.get_latest()
+        print("ok")
     else:
         raise NotImplementedError()
 
     ##################################################
 
-    monitor = FilesystemMonitor(args.folder)
-
-    target_input = args.folder
     if args.latest:
         if not Path(args.folder).is_dir():
             raise ValueError(f"The given path {args.folder} is not a folder")
-        monitor.created_new_file = True
+        monitor.set_should_refresh()
 
     try:
         # this while loop will ends if --follow is not given
         while True:
-            if args.latest and monitor.created_new_file:
-                # switch the input target to the latest file/folder
-                target_input = monitor.get_latest_modified_folder()
-                monitor.reset_condition()
+            if monitor.should_refresh():
+                if (
+                    # grab latest modified file
+                    args.data_source in ("tensorboard", "csv")
+                    and args.latest
+                ) or (
+                    # grad latest content from stdin
+                    args.data_source
+                    in ("stdin-csv",)
+                ):
+                    # switch the input target to the latest file/folder
+                    target_input = monitor.get_latest()
+                    monitor.reset_condition()
             try:
                 plot_logic(
                     target_input,
@@ -473,7 +506,21 @@ def main(args):
 def run():
     try:
         argcomplete.autocomplete(parser)
+
         _args = parser.parse_args()
+        if _args.folder is None:
+            if sys.stdin.isatty():
+                parser.print_usage()
+                print(
+                    f"{parser.prog}: File/Folder name was not given, "
+                    f"and there was no stdin for input."
+                )
+                exit(1)
+            else:
+                _args.data_source = "stdin-csv"
+
+        # print(sys.stdin.read())
+        # sys.stdin.isatty() or not sys.stdin.read()
         # handles alias of options
         if _args.dark_theme:
             # only set values when unset, such that they can be overridden
