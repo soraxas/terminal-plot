@@ -4,7 +4,10 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from pandas._typing import FilePath, ReadCsvBuffer
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from pandas._typing import FilePath, ReadCsvBuffer
 
 from termplot.data_source import DataSource, FigureData
 from termplot.etc import EmptyEventFileError
@@ -39,7 +42,7 @@ class CsvDataSource(DataSource):
 class CsvFigureData(FigureData):
     def __init__(
         self,
-        path: FilePath | ReadCsvBuffer[bytes] | ReadCsvBuffer[str] | StringIO,
+        path: Union["FilePath", "ReadCsvBuffer[bytes]", "ReadCsvBuffer[str]", StringIO],
         remove_nan: bool = True,
     ):
         # decide whether we should try to clean up nan values
