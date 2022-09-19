@@ -452,7 +452,6 @@ def main(args):
         while len(monitor.buffer) < 2:
             monitor.wait_till_new_modification()
         target_input = monitor.get_latest()
-        print("ok")
     else:
         raise NotImplementedError()
 
