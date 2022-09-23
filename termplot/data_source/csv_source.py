@@ -9,8 +9,20 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from pandas._typing import FilePath, ReadCsvBuffer
 
-from termplot.data_source import DataSource, FigureData
-from termplot.etc import EmptyEventFileError
+from termplot.data_source import (
+    DataSource,
+    FigureData,
+    DataSourceMissingException,
+    DataSourceProcessingException,
+)
+
+
+class CsvDataSourceMissingException(DataSourceMissingException):
+    pass
+
+
+class CsvDataSourceProcessingException(DataSourceProcessingException):
+    pass
 
 
 class CsvDataSource(DataSource):
@@ -19,9 +31,10 @@ class CsvDataSource(DataSource):
         self.figures = []
 
         if self.input.is_file():
-            if self.input.name.endswith(".csv"):
-                # the given 'input' is the actual csv file
-                self.figures.append(CsvFigureData(self.input))
+            # assume it is csv file
+            # if self.input.name.endswith(".csv"):
+            # the given 'input' is the actual csv file
+            self.figures.append(CsvFigureData(self.input))
         else:  # is a folder
             # the given 'input' is a folder that contains csv file
             for csv_file in self.input.glob("*.csv"):
@@ -48,10 +61,23 @@ class CsvFigureData(FigureData):
         # decide whether we should try to clean up nan values
         self.remove_nan = remove_nan
         self.path = path
-        self.df = pd.read_csv(path)
+        i = 0
+        while True:
+            try:
+                self.df = pd.read_csv(path)
+            except pd.errors.EmptyDataError:
+                i += 1
+                if i > 10:
+                    raise
+                import time
+
+                time.sleep((i * 0.05))
+            else:
+                break
+
         self.refresh()
         if len(self.scalar_names) == 0:
-            raise EmptyEventFileError(
+            raise CsvDataSourceProcessingException(
                 f"Cannot find any scalars within the csv file '{self.path}'"
             )
 

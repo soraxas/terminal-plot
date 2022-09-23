@@ -2,15 +2,14 @@ import argparse
 import logging
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 from typing import Union, Type
 
 import argcomplete
 
 from termplot._version import __version__
 from termplot.backend.base_plotter import Plotter
-from termplot.data_source import FigureData, DataSource
-from termplot.etc import EmptyEventFileError
+from termplot.data_source import FigureData, DataSource, DataSourceMissingException
 from termplot.monitor import AbstractMonitor
 from termplot.monitor.fs_monitor import FilesystemMonitor
 
@@ -345,6 +344,30 @@ def _plot_for_one_run(
             )
 
 
+def get_data_source_class(data_source: str) -> Type[DataSource]:
+    if data_source == "tensorboard":
+        from termplot.data_source.tensorboard_source import (
+            TensorboardDataSource,
+        )
+
+        data_source_class = TensorboardDataSource
+    elif data_source == "csv":
+        from termplot.data_source.csv_source import (
+            CsvDataSource,
+        )
+
+        data_source_class = CsvDataSource
+    elif data_source == "stdin-csv":
+        from termplot.data_source.stdin_csv_source import (
+            StdinCsvDataSource,
+        )
+
+        data_source_class = StdinCsvDataSource
+    else:
+        raise NotImplementedError(f"Datasource specified: {data_source}")
+    return data_source_class
+
+
 def plot_logic(
     target_input: Union[str, Path],
     plotter: Plotter,
@@ -388,12 +411,6 @@ def main(args):
         logging.basicConfig(filename="debug.log", encoding="utf-8", level=logging.DEBUG)
 
     LOGGER.debug("args: %s", args)
-    if args.data_source == "auto":
-        # try to detect the data type
-        if args.folder.endswith(".csv"):
-            args.data_source = "csv"
-        else:
-            args.data_source = "tensorboard"
 
     # set backend
     if args.backend == "plotext":
@@ -417,44 +434,43 @@ def main(args):
         plotter = MatplotlibPlotTerminal(args)
     else:
         raise NotImplementedError(f"Backend specified: {args.backend}")
-    # set data source
-    if args.data_source == "tensorboard":
-        from termplot.data_source.tensorboard_source import (
-            TensorboardDataSource,
-        )
-
-        DataSourceClass = TensorboardDataSource
-    elif args.data_source == "csv":
-        from termplot.data_source.csv_source import (
-            CsvDataSource,
-        )
-
-        DataSourceClass = CsvDataSource
-    elif args.data_source == "stdin-csv":
-        from termplot.data_source.stdin_csv_source import (
-            StdinCsvDataSource,
-        )
-
-        DataSourceClass = StdinCsvDataSource
-    else:
-        raise NotImplementedError(f"Datasource specified: {args.data_source}")
 
     ##################################################
-
     monitor: AbstractMonitor = AbstractMonitor()
-    if args.data_source in ("tensorboard", "csv"):
-        monitor = FilesystemMonitor(args.folder)
-        target_input = args.folder
-    elif args.data_source in ("stdin-csv",):
-        from termplot.monitor.stdin_monitor import StdinMonitor
 
-        monitor = StdinMonitor()
-        while len(monitor.buffer) < 2:
-            monitor.wait_till_new_modification()
-        target_input = monitor.get_latest()
+    def get_monitor_and_input(data_source: str) -> Tuple[Path, AbstractMonitor]:
+        if data_source in ("tensorboard", "csv"):
+            _monitor = FilesystemMonitor(args.folder)
+            _target_input = args.folder
+        elif data_source in ("stdin-csv",):
+            from termplot.monitor.stdin_monitor import StdinMonitor
+
+            _monitor = StdinMonitor()
+            while len(_monitor.buffer) < 2:
+                _monitor.wait_till_new_modification()
+            _target_input = _monitor.get_latest()
+        else:
+            raise NotImplementedError()
+        return _target_input, _monitor
+
+    if args.data_source == "auto":
+        # try to build each data source
+        for _data_source in ("csv", "tensorboard"):
+            target_input, monitor = get_monitor_and_input(_data_source)
+            data_source_class = get_data_source_class(_data_source)
+            try:
+                data_source_class(target_input, args)
+            except DataSourceMissingException:
+                pass
+            else:
+                args.data_source = _data_source
+                break
+        if args.data_source == "auto":
+            raise RuntimeError("Unable to determine the data source.")
     else:
-        raise NotImplementedError()
-
+        # set data source
+        target_input, monitor = get_monitor_and_input(args.data_source)
+        data_source_class = get_data_source_class(args.data_source)
     ##################################################
 
     if args.latest:
@@ -482,16 +498,19 @@ def main(args):
                 plot_logic(
                     target_input,
                     plotter,
-                    DataSourceClass,
+                    data_source_class,
                 )
-                if not plotter.args.follow:
+                if not plotter.args.follow and not monitor.should_refresh():
+                    # we will actually keep trying to update the plot, until there are
+                    # no more new pending output. Needed for csv-stdin as we begin to
+                    # plot before getting all stdin inputs.
                     break
                 # sleep to reduce update frequency
                 plotter.sleep()
                 # we will wait for filesystem to notify us when there's new update
                 monitor.wait_till_new_modification()
 
-            except EmptyEventFileError as e:
+            except DataSourceMissingException as e:
                 if not (args.latest and plotter.args.follow):
                     raise e
                 monitor.wait_till_new_modification()

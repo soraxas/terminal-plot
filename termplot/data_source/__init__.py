@@ -6,6 +6,14 @@ from typing import List, Dict, Optional
 import numpy as np
 
 
+class DataSourceMissingException(Exception, ABC):
+    pass
+
+
+class DataSourceProcessingException(Exception, ABC):
+    pass
+
+
 class DataSource(ABC):
     def __init__(self, input_file: Optional[Path], args: ArgumentParser):
         self.args = args

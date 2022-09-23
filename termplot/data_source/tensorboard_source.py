@@ -5,8 +5,20 @@ from pathlib import Path
 import numpy as np
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
-from termplot.data_source import DataSource, FigureData
-from termplot.etc import EmptyEventFileError
+from termplot.data_source import (
+    DataSource,
+    FigureData,
+    DataSourceProcessingException,
+    DataSourceMissingException,
+)
+
+
+class TensorboardDataSourceMissingException(DataSourceMissingException):
+    pass
+
+
+class TensorboardDataSourceProcessingException(DataSourceProcessingException):
+    pass
 
 
 class TensorboardDataSource(DataSource):
@@ -39,7 +51,7 @@ class TensorboardDataSource(DataSource):
                         _add_figure(folder)
 
         if len(self.figures) == 0:
-            raise ValueError(
+            raise TensorboardDataSourceMissingException(
                 f"Unable to find tensorboard event files within '{self.input}'."
             )
 
@@ -58,7 +70,7 @@ class TensorboardFigureData(FigureData):
         self.folder = folder
         self.refresh()
         if len(self.scalar_names) == 0:
-            raise EmptyEventFileError(
+            raise TensorboardDataSourceProcessingException(
                 f"Cannot find any scalars within the folder '{self.folder}'."
                 f" Is the folder correct? The ea tags are {self.ea.Tags()}"
             )
