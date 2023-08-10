@@ -40,7 +40,6 @@ class Plotter(metaclass=ABCMeta):
         return False
 
     def post_setup(self, xlabel, ylabel, cur_row, cur_col):
-
         self.xlabel(xlabel, cur_row=cur_row, cur_col=cur_col)
         self.ylabel(ylabel, cur_row=cur_row, cur_col=cur_col)
         if self.args.canvas_color:

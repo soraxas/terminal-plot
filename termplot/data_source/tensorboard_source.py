@@ -82,6 +82,9 @@ class TensorboardFigureData(FigureData):
         if x not in ("step", "time"):
             raise ValueError("Tensorboard only support 'step' or 'time' as x-axis")
         series = np.array(self.ea.Scalars(y))
+        # fixes when the pervious output results in an array of object.
+        if series.dtype == np.dtype("object"):
+            series = np.array([[o.wall_time, o.step, o.value] for o in series])
         wall_t, steps, vals = series.T
         if x == "step":
             x_values = steps
