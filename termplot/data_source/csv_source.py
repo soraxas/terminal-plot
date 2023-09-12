@@ -39,9 +39,13 @@ class CsvDataSource(DataSource):
             # the given 'input' is a folder that contains csv file
             for csv_file in self.input.glob("*.csv"):
                 self.figures.append(CsvFigureData(csv_file))
+            # if len(self.figures) == 0:
+            # try to recursively
 
         if len(self.figures) == 0:
-            raise ValueError(f"Unable to find csv files within '{self.input}'.")
+            raise CsvDataSourceMissingException(
+                f"Unable to find csv files within '{self.input}'."
+            )
 
     def __len__(self):
         return len(self.figures)
@@ -97,22 +101,26 @@ class CsvFigureData(FigureData):
 
     @staticmethod
     def try_obj_to_datetime(series: pd.Series):
-        if series.dtype == np.object:
+        if series.dtype == object:
             # try to convert to datetime
             series = pd.to_datetime(series)
         return series
 
     def get_series(self, *, x: str, y: str):
-        y_values = self.df[y]
+        y_values = self.df[y].to_numpy()
         if x == "step":
             x_values = np.arange(len(y_values))
         else:
             x_values = self.df[x]
         if self.remove_nan:
             # remove nan values in x
-            self.remove_nan_values(x_values, y_values, reference_values=x_values)
+            x_values, y_values = self.remove_nan_values(
+                x_values, y_values, reference_values=x_values
+            )
             # remove nan values in y
-            self.remove_nan_values(x_values, y_values, reference_values=y_values)
+            x_values, y_values = self.remove_nan_values(
+                x_values, y_values, reference_values=y_values
+            )
 
         x_values = self.try_obj_to_datetime(x_values)
         y_values = self.try_obj_to_datetime(y_values)

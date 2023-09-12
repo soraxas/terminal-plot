@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Tuple, Dict, Optional
 
 import numpy as np
 
@@ -12,6 +12,14 @@ class DataSourceMissingException(Exception, ABC):
 
 class DataSourceProcessingException(Exception, ABC):
     pass
+
+
+def guess_prefix(token: str, determiner_list: Tuple[str] = ("/", "_")):
+    for determiner in determiner_list:
+        prefix = token.split(determiner)
+        if len(prefix) > 1:
+            return prefix[0]
+    return token
 
 
 class DataSource(ABC):
@@ -58,7 +66,7 @@ class DataSource(ABC):
         if self.args.consolidate == 1:
             for scalar_name in all_scalar_names:
                 # e.g. Loss/train, Loss/test, etc.
-                prefix = scalar_name.split("/")[0]
+                prefix = guess_prefix(scalar_name)
                 stats = consolidated_stats.get(prefix, [])
                 stats.append(scalar_name)
                 consolidated_stats[prefix] = stats
