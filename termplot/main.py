@@ -8,8 +8,13 @@ from typing import Union, Type
 import argcomplete
 
 from termplot._version import __version__
-from termplot.backend.base_plotter import Plotter
-from termplot.data_source import FigureData, DataSource, DataSourceMissingException
+from termplot.backend.base_plotter import Plotter, PlottingError
+from termplot.data_source import (
+    FigureData,
+    DataSource,
+    DataSourceMissingException,
+    DataSourceProcessingException,
+)
 from termplot.monitor import AbstractMonitor
 from termplot.monitor.fs_monitor import FilesystemMonitor
 
@@ -510,7 +515,11 @@ def main(args):
                 # we will wait for filesystem to notify us when there's new update
                 monitor.wait_till_new_modification()
 
-            except DataSourceMissingException as e:
+            except (
+                DataSourceMissingException,
+                DataSourceProcessingException,
+                PlottingError,
+            ) as e:
                 if not (args.latest and plotter.args.follow):
                     raise e
                 monitor.wait_till_new_modification()

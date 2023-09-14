@@ -8,6 +8,10 @@ class UnsupportedOption(NotImplementedError):
     pass
 
 
+class PlottingError(Exception):
+    pass
+
+
 # noinspection SpellCheckingInspection
 class Plotter(metaclass=ABCMeta):
     def __init__(self, args: argparse.ArgumentParser):

@@ -75,7 +75,11 @@ class DataSource(ABC):
             consolidated_stats[""] = []
             for scalar_name in all_scalar_names:
                 consolidated_stats[""].append(scalar_name)
-        return consolidated_stats
+        # sort so that results are consistent and look uniform.
+        return {
+            prefix: sorted(mapped_stat)
+            for prefix, mapped_stat in consolidated_stats.items()
+        }
 
     @abstractmethod
     def __len__(self) -> int:
