@@ -111,9 +111,10 @@ class TensorboardFigureData(FigureData):
         wall_t_origin = float("inf")
 
         for scalar_name in self.scalar_names:
-            series = np.array(self.ea.Scalars(scalar_name))
-            wall_t, steps, vals = series.T
-            wall_t_origin = min(wall_t_origin, wall_t[0])
+            # series = np.array(self.ea.Scalars(scalar_name))
+            # wall_t, steps, vals = series.T
+            first_item = self.ea.Scalars(scalar_name)[0]
+            wall_t_origin = min(wall_t_origin, first_item.wall_time)
 
         return wall_t_origin
 
