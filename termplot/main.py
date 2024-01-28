@@ -68,7 +68,7 @@ parser.add_argument(
     "--data-source",
     default="auto",
     help="Set the plotting data source",
-    choices=["tensorboard", "csv"],
+    choices=["tensorboard", "csv", "jsonl"],
     type=str,
 )
 parser.add_argument(
@@ -362,6 +362,12 @@ def get_data_source_class(data_source: str) -> Type[DataSource]:
         )
 
         data_source_class = CsvDataSource
+    elif data_source == "jsonl":
+        from termplot.data_source.jsonl import (
+            JsonlDataSource,
+        )
+
+        data_source_class = JsonlDataSource
     elif data_source == "stdin-csv":
         from termplot.data_source.stdin_csv_source import (
             StdinCsvDataSource,
@@ -444,7 +450,7 @@ def main(args):
     monitor: AbstractMonitor = AbstractMonitor()
 
     def get_monitor_and_input(data_source: str) -> Tuple[Path, AbstractMonitor]:
-        if data_source in ("tensorboard", "csv"):
+        if data_source in ("tensorboard", "csv", "jsonl"):
             _monitor = FilesystemMonitor(args.folder)
             _target_input = args.folder
         elif data_source in ("stdin-csv",):
@@ -459,8 +465,12 @@ def main(args):
         return _target_input, _monitor
 
     if args.data_source == "auto":
+        _data_sources_to_test = ("csv", "tensorboard", "jsonl")
+        if args.folder.endswith(".json") or args.folder.endswith(".jsonl"):
+            _data_sources_to_test = ("jsonl", "csv", "tensorboard")
+
         # try to build each data source
-        for _data_source in ("csv", "tensorboard"):
+        for _data_source in _data_sources_to_test:
             target_input, monitor = get_monitor_and_input(_data_source)
             data_source_class = get_data_source_class(_data_source)
             try:
