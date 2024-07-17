@@ -1,7 +1,7 @@
 import re
 from os import path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 # read the contents of README file
 this_directory = path.abspath(path.dirname(__file__))
@@ -28,11 +28,7 @@ setup(
     url="https://github.com/soraxas/termplot",
     keywords="tui termplot stats tensorboard csv",
     python_requires=">=3.6",
-    packages=[
-        "termplot",
-        "termplot.backend",
-        "termplot.data_source",
-    ],
+    packages=find_packages(),
     install_requires=[
         "tensorboard>=2.5",
         "plotext==5.0.2",
