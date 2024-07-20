@@ -4,12 +4,12 @@ import sys
 from functools import lru_cache
 from shutil import which
 from subprocess import Popen, PIPE, STDOUT
+from loguru import logger
+
 
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
-import logging
 
-LOGGER = logging.getLogger(__file__)
 
 from .base_plotter import Plotter, PlottingError
 
@@ -93,7 +93,7 @@ class MatplotlibPlot(Plotter):
         try:
             self.fig, self.axs = plt.subplots(row, col, figsize=self.args.plotsize)
         except (ValueError, IndexError) as e:
-            LOGGER.warn(e)
+            logger.warn(e)
             raise PlottingError from e
 
     def set_title(self, title):

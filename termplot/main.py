@@ -1,9 +1,9 @@
 import argparse
-import logging
 import sys
 from pathlib import Path
 from typing import Dict, Tuple
 from typing import Union, Type
+from loguru import logger
 
 import argcomplete
 
@@ -17,8 +17,6 @@ from termplot.data_source import (
 )
 from termplot.monitor import AbstractMonitor
 from termplot.monitor.fs_monitor import FilesystemMonitor
-
-LOGGER = logging.getLogger(__file__)
 
 
 def pair_of_num(arg):
@@ -401,12 +399,12 @@ def plot_logic(
 
     # create the master plot of all folders
     plotter.create_subplot(max_plots, len(data_source))
-    LOGGER.debug("created subplot with size (%s, %s)", max_plots, len(data_source))
+    logger.debug("created subplot with size ({}, {})", max_plots, len(data_source))
 
     # do the actual plotting
     for i, figure_data in enumerate(data_source):
         # plot the column of subplots for this folder
-        LOGGER.debug("plot with %s with data %s", plotter.__class__, figure_data)
+        logger.debug("plot with {} with data {}", plotter.__class__, figure_data)
         _plot_for_one_run(plotter, figure_data, data_source.get_consolidated_stats(), i)
 
     plotter.clear_terminal_printed_lines()
@@ -418,10 +416,11 @@ def plot_logic(
 
 
 def main(args):
-    if args.debug:
-        logging.basicConfig(filename="debug.log", encoding="utf-8", level=logging.DEBUG)
+    if not args.debug:
+        logger.remove()
+        logger.add(sys.stderr, level="INFO")
 
-    LOGGER.debug("args: %s", args)
+    logger.debug("args: {}", args)
 
     # set backend
     if args.backend == "plotext":
