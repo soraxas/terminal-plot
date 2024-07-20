@@ -6,12 +6,22 @@ from typing import List, Tuple, Dict, Optional
 import numpy as np
 
 
-class DataSourceMissingException(Exception, ABC):
-    pass
+class DataSourceMissingException(Exception, ABC): ...
 
 
-class DataSourceProcessingException(Exception, ABC):
-    pass
+class DataSourceProcessingException(Exception, ABC): ...
+
+
+class NonNumericalSeries(Exception):
+    _offending_series = None
+
+    @property
+    def offending_series(self):
+        return self._offending_series
+
+    @offending_series.setter
+    def offending_series(self, value):
+        self._offending_series = value
 
 
 def guess_prefix(token: str, determiner_list: Tuple[str] = ("/", "_")):

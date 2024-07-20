@@ -1,3 +1,5 @@
+from argparse import ArgumentParser
+import os
 import pandas as pd
 import numpy as np
 import plotext
@@ -9,6 +11,29 @@ from .base_plotter import Plotter
 
 # noinspection SpellCheckingInspection
 class TerminalPlot(Plotter):
+
+    def __init__(self, args: ArgumentParser):
+        super().__init__(args)
+        self._fixed_color_seq = [
+            "blue",
+            "red",
+            "magenta",
+            "green",
+            "orange",
+            "cyan",
+            "black",
+            "white",
+            "gray",
+        ]
+        # do not use the color sequence that's same as the canvas
+        canvas_color = "white"
+        if self.args.canvas_color is not None:
+            canvas_color = self.args.canvas_color
+        try:
+            self._fixed_color_seq.pop(self._fixed_color_seq.index(canvas_color))
+        except ValueError:
+            pass
+
     @property
     def unsupported_options(self):
         return ["xsymlog", "ysymlog"]
@@ -67,11 +92,11 @@ class TerminalPlot(Plotter):
         plt.colorless()
 
     def target_subplot(self, row, col):
-        plt.subplot(row, col)
+        plt.main().subplot(row, col)
 
     def create_subplot(self, row, col):
         super().create_subplot(row, col)
-        plt.subplots(row, col)
+        plt.main().subplots(row, col)
 
     def set_title(self, title):
         plt.title(title)
@@ -80,7 +105,8 @@ class TerminalPlot(Plotter):
         plt.clf()
 
     def clear_terminal_printed_lines(self):
-        plt.clear_terminal()
+        # plt.clear_terminal()
+        os.system("cls" if os.name == "nt" else "clear")
 
     def show(self):
         if self.args.terminal_width and self.args.terminal_height:
@@ -97,28 +123,4 @@ class TerminalPlot(Plotter):
 
     @property
     def fixed_color_seq(self):
-        # return plt_util.color.color_sequence
-        return [
-            "bright-blue",
-            "red",
-            "magenta",
-            "green",
-            "black",
-            "bright-magenta",
-            "bright-red",
-            "yellow",
-            "blue",
-            "default",
-            "cyan",
-            "white",
-            "bright-black",
-            "bright-green",
-            "bright-cyan",
-            "bright-white",
-            "bright-yellow",
-        ]
-
-    @property
-    def generator_color_seq(self):
-        while True:
-            yield from self.fixed_color_seq
+        return self._fixed_color_seq

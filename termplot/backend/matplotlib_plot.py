@@ -93,7 +93,7 @@ class MatplotlibPlot(Plotter):
         try:
             self.fig, self.axs = plt.subplots(row, col, figsize=self.args.plotsize)
         except (ValueError, IndexError) as e:
-            logger.warn(e)
+            logger.warning(e)
             raise PlottingError from e
 
     def set_title(self, title):
@@ -137,11 +137,6 @@ class MatplotlibPlot(Plotter):
     @property
     def fixed_color_seq(self):
         return mcolors.TABLEAU_COLORS
-
-    @property
-    def generator_color_seq(self):
-        while True:
-            yield from mcolors.TABLEAU_COLORS
 
     def close(self):
         plt.close(self.fig)

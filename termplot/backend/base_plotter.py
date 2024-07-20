@@ -162,9 +162,9 @@ class Plotter(metaclass=ABCMeta):
         pass
 
     @property
-    @abstractmethod
     def generator_color_seq(self):
-        pass
+        while True:
+            yield from self.fixed_color_seq
 
     def close(self):
         pass

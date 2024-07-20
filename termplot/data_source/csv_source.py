@@ -14,6 +14,7 @@ from termplot.data_source import (
     FigureData,
     DataSourceMissingException,
     DataSourceProcessingException,
+    NonNumericalSeries,
 )
 
 
@@ -102,8 +103,11 @@ class CsvFigureData(FigureData):
     @staticmethod
     def try_obj_to_datetime(series: pd.Series):
         if series.dtype == object:
-            # try to convert to datetime
-            series = pd.to_datetime(series)
+            try:
+                # try to convert to datetime
+                series = pd.to_datetime(series)
+            except Exception as e:
+                raise NonNumericalSeries() from e
         return series
 
     def get_series(self, *, x: str, y: str):

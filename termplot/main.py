@@ -6,6 +6,7 @@ from typing import Union, Type
 from loguru import logger
 
 import argcomplete
+import warnings
 
 from termplot._version import __version__
 from termplot.backend.base_plotter import Plotter, PlottingError
@@ -14,6 +15,7 @@ from termplot.data_source import (
     DataSource,
     DataSourceMissingException,
     DataSourceProcessingException,
+    NonNumericalSeries,
 )
 from termplot.monitor import AbstractMonitor
 from termplot.monitor.fs_monitor import FilesystemMonitor
@@ -317,9 +319,13 @@ def _plot_for_one_run(
         ###############################
 
         for scalar_name, color in zip(scalar_names, colors):
-            x_val, y_val = figure_data.get_series(
-                x=plotter.args.xaxis_type, y=scalar_name
-            )
+            try:
+                x_val, y_val = figure_data.get_series(
+                    x=plotter.args.xaxis_type, y=scalar_name
+                )
+            except NonNumericalSeries as e:
+                e.offending_series = scalar_name
+                raise e
             if plotter.args.smooth:
                 y_val = apply_smoothing(
                     y_val, plotter.args.smooth, plotter.args.smooth_poly_order
@@ -394,20 +400,41 @@ def plot_logic(
 
     data_source = DataSourceClass(target_input, plotter.args)
 
-    # Get the maximum number of subplots across all folder
-    max_plots = len(data_source.get_consolidated_stats())
+    while True:
+        try:
+            data_source = DataSourceClass(target_input, plotter.args)
 
-    # create the master plot of all folders
-    plotter.create_subplot(max_plots, len(data_source))
-    logger.debug("created subplot with size ({}, {})", max_plots, len(data_source))
+            # Get the maximum number of subplots across all folder
+            consolidated_stats = data_source.get_consolidated_stats()
+            max_plots = len(consolidated_stats)
 
-    # do the actual plotting
-    for i, figure_data in enumerate(data_source):
-        # plot the column of subplots for this folder
-        logger.debug("plot with {} with data {}", plotter.__class__, figure_data)
-        _plot_for_one_run(plotter, figure_data, data_source.get_consolidated_stats(), i)
+            # create the master plot of all folders
+            plotter.create_subplot(max_plots, len(data_source))
+            logger.debug(
+                "created subplot with size ({}, {})", max_plots, len(data_source)
+            )
 
-    plotter.clear_terminal_printed_lines()
+            # do the actual plotting
+            for col_i, figure_data in enumerate(data_source):
+                # plot the column of subplots for this folder
+                logger.debug(
+                    "plot with {} with data {}", plotter.__class__, figure_data
+                )
+                _plot_for_one_run(plotter, figure_data, consolidated_stats, col_i)
+
+            break
+
+        except NonNumericalSeries as e:
+            # when one of the series is non-numeric, we will auto add it to blacklist,
+            # the current approach might be redundant (as we force all the redoing of
+            # previously plotted series).
+            logger.warning(
+                f"The series '{e.offending_series}' is non-numeric; ignoring it..."
+            )
+            if plotter.args.blacklist is None:
+                plotter.args.blacklist = []
+            plotter.args.blacklist.append(e.offending_series)
+
     if plotter.args.as_raw_bytes:
         plotter.as_image_raw_bytes()
     else:
